@@ -1,0 +1,1231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>SEM Validation</title>
+<link rel="icon" type="image/svg+xml" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#11151a">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<style>
+  :root{
+    --bg:#11151a; --panel:#171c22; --panel2:#1d232b; --panel3:#242b33;
+    --border:#2b323b; --border-soft:#232a32;
+    --text:#eef2f5; --text-dim:#93a0ac; --text-mute:#5c6773;
+    --accent:#3fb9c4; --accent-dim:#215a61; --accent-soft:#173238;
+    --good:#4caf6d; --good-bg:#16311f; --good-border:#2c5a3c;
+    --avg:#d9a536; --avg-bg:#382c10; --avg-border:#6b5220;
+    --bad:#e05b56; --bad-bg:#3a1c1a; --bad-border:#6e332f;
+    --gray:#8992a0; --gray-bg:#212730; --gray-border:#39424e;
+    --pending-bg:#1a2027; --pending-border:#2b323b;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0; padding:0;}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif; font-size:14px; line-height:1.45;
+    padding-bottom:48px;
+  }
+  h1,h2,h3{font-family:'Oswald',sans-serif; font-weight:600; letter-spacing:0.01em; margin:0; text-wrap:balance;}
+  .mono{font-family:'IBM Plex Mono',monospace; font-variant-numeric:tabular-nums;}
+  button{font-family:inherit; cursor:pointer;}
+  input{font-family:inherit;}
+  a{color:var(--accent);}
+
+  /* ---------- update banner ---------- */
+  #updateBanner{
+    display:none; align-items:center; gap:12px; padding:10px 16px;
+    background:var(--accent-soft); border-bottom:1px solid var(--accent-dim); color:var(--text);
+    font-size:13px; position:sticky; top:0; z-index:50;
+  }
+  #updateBanner button{ background:var(--accent); color:#0a1113; border:none; border-radius:6px; padding:6px 12px; font-weight:600; }
+  #updateBanner .x{ cursor:pointer; margin-left:auto; color:var(--text-dim); font-size:16px; background:none; border:none; padding:2px 6px; }
+  #updateBanner .x:hover{ color:var(--text); }
+
+  /* ---------- header ---------- */
+  header{
+    padding:18px 20px 10px; border-bottom:1px solid var(--border);
+    display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;
+  }
+  header h1{ font-size:26px; text-transform:uppercase; }
+  header p{ margin:2px 0 0; color:var(--text-dim); font-size:12.5px; }
+  .header-actions{ display:flex; align-items:center; gap:10px; }
+  .sync-status{ color:var(--text-mute); font-size:11.5px; white-space:nowrap; }
+  .icon-btn{
+    background:var(--panel2); border:1px solid var(--border); color:var(--text-dim);
+    width:34px; height:34px; border-radius:8px; font-size:16px; display:flex; align-items:center; justify-content:center;
+  }
+  .icon-btn:hover{ color:var(--text); border-color:var(--accent-dim); }
+
+  /* ---------- legend ---------- */
+  .legend{
+    display:flex; flex-wrap:wrap; gap:6px 16px; padding:9px 20px; border-bottom:1px solid var(--border);
+    background:var(--panel2); font-size:12px; color:var(--text-dim);
+  }
+  .legend .item{ display:flex; align-items:center; gap:6px; }
+  .legend .dot{ width:9px; height:9px; border-radius:50%; flex:none; }
+
+  /* ---------- matrix tabs ---------- */
+  .matrix-tabs{
+    display:flex; overflow-x:auto; border-bottom:1px solid var(--border); background:var(--panel);
+    -webkit-overflow-scrolling:touch;
+  }
+  .matrix-tabs::-webkit-scrollbar{ height:0; }
+  .matrix-tab{
+    flex:none; display:flex; align-items:center; gap:7px; padding:12px 18px;
+    background:none; border:none; border-bottom:2px solid transparent; color:var(--text-dim);
+    font-family:'Oswald',sans-serif; font-size:14px; letter-spacing:0.02em; text-transform:uppercase;
+    white-space:nowrap;
+  }
+  .matrix-tab.active{ color:var(--text); border-bottom-color:var(--accent); background:var(--panel2); }
+  .matrix-tab:hover:not(.active){ color:var(--text); }
+
+  /* ---------- matrix summary bar ---------- */
+  .matrix-summary{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    padding:12px 20px; background:var(--panel2); border-bottom:1px solid var(--border-soft);
+  }
+  .status-block{ display:flex; align-items:center; gap:10px; }
+  .status-block .label{ font-size:11px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-mute); }
+
+  /* ---------- sample tabs ---------- */
+  .sample-tabs{
+    display:flex; gap:8px; overflow-x:auto; padding:10px 20px; border-bottom:1px solid var(--border);
+    -webkit-overflow-scrolling:touch;
+  }
+  .sample-tabs::-webkit-scrollbar{ height:0; }
+  .sample-tab{
+    flex:none; display:flex; align-items:center; gap:7px; padding:7px 13px; border-radius:20px;
+    background:var(--panel2); border:1px solid var(--border); color:var(--text-dim); font-size:13px;
+    white-space:nowrap;
+  }
+  .sample-tab.active{ background:var(--panel3); color:var(--text); border-color:var(--accent-dim); }
+  .sample-tab .pin{ font-size:10px; opacity:0.75; }
+  .add-sample-btn{
+    flex:none; display:flex; align-items:center; gap:6px; padding:7px 13px; border-radius:20px;
+    background:none; border:1px dashed var(--border); color:var(--text-mute); font-size:13px;
+  }
+  .add-sample-btn:hover{ color:var(--accent); border-color:var(--accent-dim); }
+
+  /* ---------- main / sample editor ---------- */
+  main{ padding:18px 20px 40px; max-width:900px; margin:0 auto; }
+  .empty-state{
+    text-align:center; padding:60px 20px; color:var(--text-mute);
+  }
+  .empty-state .cta{ margin-top:14px; }
+
+  .sample-header{
+    display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;
+    margin-bottom:16px;
+  }
+  .sample-name-input{
+    background:none; border:none; border-bottom:1px solid transparent; color:var(--text);
+    font-family:'Oswald',sans-serif; font-size:22px; font-weight:600; padding:2px 0; min-width:120px; max-width:100%;
+  }
+  .sample-name-input:hover, .sample-name-input:focus{ border-bottom-color:var(--border); outline:none; }
+  .sample-header-actions{ display:flex; align-items:center; gap:10px; }
+
+  .suggested-row{
+    display:flex; flex-wrap:wrap; align-items:center; gap:8px; margin-bottom:14px;
+    padding:9px 12px; background:var(--panel2); border:1px solid var(--border-soft); border-radius:8px;
+  }
+  .suggested-row .label{ font-size:11.5px; color:var(--text-mute); margin-right:2px; }
+  .chip-btn{
+    background:var(--panel3); border:1px solid var(--border); color:var(--text-dim); border-radius:14px;
+    padding:4px 10px; font-size:12.5px; font-family:'IBM Plex Mono',monospace;
+  }
+  .chip-btn:hover{ color:var(--accent); border-color:var(--accent-dim); }
+  .chip-btn:disabled{ opacity:0.35; cursor:default; }
+
+  .elements-list{ border:1px solid var(--border-soft); border-radius:10px; overflow:hidden; background:var(--panel); }
+  .elements-head{
+    display:flex; align-items:center; gap:12px; padding:8px 14px; background:var(--panel2);
+    font-size:10.5px; text-transform:uppercase; letter-spacing:0.06em; color:var(--text-mute);
+    border-bottom:1px solid var(--border-soft);
+  }
+  .element-row{
+    display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; padding:11px 14px;
+    border-bottom:1px solid var(--border-soft);
+  }
+  .element-row:last-child{ border-bottom:none; }
+  .el-symbol-wrap{ display:flex; align-items:center; gap:6px; flex:none; width:78px; }
+  .el-symbol{
+    width:100%; background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    border-radius:6px; padding:6px 8px; font-family:'IBM Plex Mono',monospace; font-weight:600; font-size:14px; text-align:center;
+  }
+  .el-symbol.dup{ border-color:var(--bad); color:var(--bad); }
+  .el-field{ display:flex; flex-direction:column; gap:3px; flex:none; }
+  .el-field label{ font-size:9.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-mute); }
+  .el-expected{
+    width:78px; background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    border-radius:6px; padding:6px 8px; font-family:'IBM Plex Mono',monospace; font-size:13.5px;
+  }
+  .measurements-block{ display:flex; flex-direction:column; gap:5px; flex:1 1 220px; min-width:180px; }
+  .measurements-block > label{ font-size:9.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-mute); }
+  .measurements-chips{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .measure-chip{ display:flex; align-items:center; gap:4px; background:var(--panel2); border:1px solid var(--border); border-radius:6px; padding:2px 4px 2px 8px; }
+  .measure-chip input{
+    width:60px; background:none; border:none; color:var(--text); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:4px 2px;
+  }
+  .measure-chip input:focus{ outline:none; }
+  .measure-chip .rm{ background:none; border:none; color:var(--text-mute); font-size:13px; padding:4px 6px; line-height:1; }
+  .measure-chip .rm:hover{ color:var(--bad); }
+  .add-measure{ background:none; border:1px dashed var(--border); color:var(--text-mute); border-radius:6px; padding:5px 9px; font-size:12px; }
+  .add-measure:hover{ color:var(--accent); border-color:var(--accent-dim); }
+
+  .el-computed{ display:flex; flex-direction:column; gap:3px; flex:none; width:64px; }
+  .el-computed .val{ font-family:'IBM Plex Mono',monospace; font-size:13.5px; color:var(--text); }
+  .el-computed .val.muted{ color:var(--text-mute); }
+
+  .el-actions{ display:flex; align-items:center; gap:8px; margin-left:auto; }
+  .remove-el{ background:none; border:none; color:var(--text-mute); font-size:15px; padding:4px 6px; }
+  .remove-el:hover{ color:var(--bad); }
+
+  .add-element-row{ display:flex; align-items:center; gap:8px; padding:12px 14px; background:var(--panel2); }
+  .add-element-row input{
+    background:var(--panel3); border:1px solid var(--border); color:var(--text); border-radius:6px;
+    padding:7px 10px; font-family:'IBM Plex Mono',monospace; font-size:13.5px; width:120px;
+  }
+  .add-element-row button{
+    background:var(--accent); color:#0a1113; border:none; border-radius:6px; padding:7px 13px; font-weight:600; font-size:13px;
+  }
+
+  /* ---------- color badges ---------- */
+  .badge{
+    display:inline-flex; align-items:center; gap:5px; border-radius:14px; padding:4px 10px;
+    font-size:12px; font-family:'IBM Plex Mono',monospace; border:1px solid var(--pending-border);
+    background:var(--pending-bg); color:var(--text-mute); white-space:nowrap;
+  }
+  .badge .dot{ width:8px; height:8px; border-radius:50%; background:var(--text-mute); flex:none; }
+  .badge.green{ background:var(--good-bg); border-color:var(--good-border); color:var(--good); }
+  .badge.green .dot{ background:var(--good); }
+  .badge.yellow{ background:var(--avg-bg); border-color:var(--avg-border); color:var(--avg); }
+  .badge.yellow .dot{ background:var(--avg); }
+  .badge.red{ background:var(--bad-bg); border-color:var(--bad-border); color:var(--bad); }
+  .badge.red .dot{ background:var(--bad); }
+  .badge.gray{ background:var(--gray-bg); border-color:var(--gray-border); color:var(--gray); }
+  .badge.gray .dot{ background:var(--gray); }
+  .badge.large{ padding:6px 14px; font-size:13.5px; }
+  .badge .pin{ font-size:10px; opacity:0.8; }
+  .dot-only{ width:10px; height:10px; border-radius:50%; background:var(--text-mute); flex:none; }
+  .dot-only.green{ background:var(--good); }
+  .dot-only.yellow{ background:var(--avg); }
+  .dot-only.red{ background:var(--bad); }
+  .dot-only.gray{ background:var(--gray); }
+
+  #colorPopover{
+    display:none; position:fixed; z-index:80; background:var(--panel3); border:1px solid var(--border);
+    border-radius:10px; padding:5px; flex-direction:column; gap:2px; box-shadow:0 8px 24px rgba(0,0,0,0.4); min-width:150px;
+  }
+  .popover-opt{
+    display:flex; align-items:center; gap:8px; background:none; border:none; color:var(--text-dim);
+    padding:7px 10px; border-radius:6px; font-size:13px; text-align:left;
+  }
+  .popover-opt:hover{ background:var(--panel2); color:var(--text); }
+  .popover-opt.active{ color:var(--accent); }
+
+  /* ---------- settings modal ---------- */
+  .modal-overlay{
+    display:none; position:fixed; inset:0; background:rgba(6,9,12,0.65); z-index:70;
+    align-items:flex-start; justify-content:center; padding:28px 14px;
+    overflow-y:auto;
+  }
+  .modal{
+    background:var(--panel); border:1px solid var(--border); border-radius:12px; width:100%; max-width:560px;
+    max-height:calc(100vh - 56px); display:flex; flex-direction:column;
+  }
+  .modal-header{
+    display:flex; align-items:center; justify-content:space-between; padding:16px 20px; border-bottom:1px solid var(--border-soft);
+  }
+  .modal-body{ padding:18px 20px 24px; overflow-y:auto; display:flex; flex-direction:column; gap:24px; }
+  .settings-section h3{ font-size:15px; margin-bottom:10px; color:var(--text); text-transform:uppercase; letter-spacing:0.03em; }
+  .settings-section .hint{ font-size:12px; color:var(--text-mute); margin:0 0 12px; }
+  .threshold-row{ display:flex; align-items:center; gap:10px; margin-bottom:10px; flex-wrap:wrap; }
+  .threshold-row label{ flex:1 1 200px; font-size:13px; color:var(--text-dim); }
+  .threshold-row input{
+    width:80px; background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    border-radius:6px; padding:6px 8px; font-family:'IBM Plex Mono',monospace; font-size:13.5px;
+  }
+  .matrix-defaults-block{ margin-bottom:16px; }
+  .matrix-defaults-block h4{
+    font-family:'Oswald',sans-serif; font-size:13.5px; text-transform:uppercase; letter-spacing:0.03em;
+    color:var(--text-dim); margin:0 0 7px;
+  }
+  .default-chips{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .default-chip{ display:flex; align-items:center; gap:5px; background:var(--panel2); border:1px solid var(--border); border-radius:12px; padding:3px 4px 3px 9px; font-family:'IBM Plex Mono',monospace; font-size:12px; color:var(--text-dim); }
+  .default-chip .rm{ background:none; border:none; color:var(--text-mute); padding:3px 6px; font-size:12px; }
+  .default-chip .rm:hover{ color:var(--bad); }
+  .default-chip-add{ display:flex; align-items:center; gap:4px; }
+  .default-chip-add input{
+    width:60px; background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:12px;
+    padding:4px 9px; font-family:'IBM Plex Mono',monospace; font-size:12px;
+  }
+  .default-chip-add button{ background:var(--panel3); border:1px solid var(--border); color:var(--text-dim); border-radius:10px; padding:4px 9px; font-size:12px; }
+
+  .btn-secondary{
+    background:var(--panel3); border:1px solid var(--border); color:var(--text-dim); border-radius:7px;
+    padding:7px 13px; font-size:13px;
+  }
+  .btn-secondary:hover{ color:var(--text); border-color:var(--accent-dim); }
+  .btn-danger{ background:none; border:1px solid var(--bad-border); color:var(--bad); border-radius:7px; padding:7px 13px; font-size:13px; }
+  .btn-danger:hover{ background:var(--bad-bg); }
+  .link-btn{ background:none; border:none; color:var(--accent); font-size:12px; padding:0; }
+  .link-btn:hover{ text-decoration:underline; }
+
+  footer{
+    display:flex; align-items:center; gap:12px; justify-content:center; flex-wrap:wrap;
+    padding:16px 20px; color:var(--text-mute); font-size:11.5px; border-top:1px solid var(--border-soft); margin-top:20px;
+  }
+
+  @media (max-width:520px){
+    header{ padding:16px 14px 8px; }
+    .matrix-summary, .sample-tabs, .legend{ padding-left:14px; padding-right:14px; }
+    main{ padding:16px 14px 40px; }
+    .el-symbol-wrap{ width:66px; }
+    .elements-head{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="updateBanner">
+  <span>A new version of SEM Validation is available.</span>
+  <button id="updateReloadBtn">Reload now</button>
+  <button class="x" id="updateDismiss">&times;</button>
+</div>
+
+<header>
+  <div class="title-block">
+    <h1>SEM Validation</h1>
+    <p>EDS calibrant tracking &amp; matrix validation</p>
+  </div>
+  <div class="header-actions">
+    <span id="syncStatus" class="sync-status mono"></span>
+    <button id="settingsBtn" class="icon-btn" title="Settings">&#9881;</button>
+  </div>
+</header>
+
+<div id="legend" class="legend"></div>
+
+<nav id="matrixTabs" class="matrix-tabs"></nav>
+<div id="matrixSummary" class="matrix-summary"></div>
+<nav id="sampleTabs" class="sample-tabs"></nav>
+
+<main id="sampleEditor"></main>
+
+<div id="settingsModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Settings</h2>
+      <button id="settingsClose" class="icon-btn">&times;</button>
+    </div>
+    <div class="modal-body" id="settingsBody"></div>
+  </div>
+</div>
+
+<div id="colorPopover"></div>
+
+<datalist id="elementSymbolsList"></datalist>
+
+<footer>
+  <span id="appVersion" class="mono"></span>
+  <button id="checkUpdateBtn" class="link-btn">Check for update</button>
+  <span id="updateCheckStatus" class="mono"></span>
+</footer>
+
+<script>
+/* =========================================================
+   SEM Validation — single-file app.
+   Data lives in one Firestore document; see SETUP.md to wire
+   up your own Firebase project before this can save anything.
+   ========================================================= */
+
+const APP_VERSION = 'v1.0.0';
+const APP_VERSION_DATE = '2026-09-14';
+const VERSION_LOG = [
+  { version: 'v1.0.0', date: '2026-09-14', notes: 'Initial release: six matrices, per-sample element tracking, auto color grading with manual overrides, editable thresholds and default element sets.' },
+];
+
+/* ---------- reference data ---------- */
+
+const MATRIX_ORDER = ['steel', 'stainless', 'aluminum', 'nickel', 'titanium', 'copper'];
+const MATRIX_LABELS = {
+  steel: 'Steel', stainless: 'Stainless Steel', aluminum: 'Aluminum',
+  nickel: 'Nickel', titanium: 'Titanium', copper: 'Copper',
+};
+
+// Defaults per your spec. Copper had no default list in the source notes —
+// this is a reasonable starting set for copper alloys (brass/bronze); edit
+// it in Settings like any other matrix.
+const DEFAULT_ELEMENTS = {
+  steel: ['Fe', 'Cr', 'Ni', 'Si', 'Mo', 'Mn'],
+  stainless: ['Fe', 'Cr', 'Ni', 'Si', 'Mo', 'Mn', 'Al', 'Nb', 'Ti'],
+  aluminum: ['Al', 'Cu', 'Zn', 'Mg', 'Si'],
+  nickel: ['Ni', 'Co', 'Cr', 'Fe'],
+  titanium: ['Ti', 'Al', 'V'],
+  copper: ['Cu', 'Zn', 'Sn', 'Pb', 'Ni', 'Fe', 'Al'],
+};
+
+// Quick-add suggestions for nickel superalloys (Inconel/Monel/Hastelloy family).
+const NICKEL_SUGGESTED_EXTRA = ['Mo', 'Cu', 'Ti', 'Al', 'Nb', 'Mn', 'W', 'C'];
+
+const PERIODIC_SYMBOLS = ['H','He','Li','Be','B','C','N','O','F','Ne','Na','Mg','Al','Si','P','S','Cl','Ar','K','Ca','Sc','Ti','V','Cr','Mn','Fe','Co','Ni','Cu','Zn','Ga','Ge','As','Se','Br','Kr','Rb','Sr','Y','Zr','Nb','Mo','Tc','Ru','Rh','Pd','Ag','Cd','In','Sn','Sb','Te','I','Xe','Cs','Ba','La','Ce','Pr','Nd','Pm','Sm','Eu','Gd','Tb','Dy','Ho','Er','Tm','Yb','Lu','Hf','Ta','W','Re','Os','Ir','Pt','Au','Hg','Tl','Pb','Bi','Po','At','Rn','Fr','Ra','Ac','Th','Pa','U','Np','Pu','Am','Cm','Bk','Cf','Es','Fm','Md','No','Lr','Rf','Db','Sg','Bh','Hs','Mt','Ds','Rg','Cn','Nh','Fl','Mc','Lv','Ts','Og'];
+
+const DEFAULT_SETTINGS = { greenPct: 5, yellowPct: 20, grayBelowWt: 0.1 };
+
+const COLOR_OPTIONS = [
+  { key: null, label: 'Auto', icon: '&#9680;' },
+  { key: 'green', label: 'Good', icon: '&#9679;' },
+  { key: 'yellow', label: 'Average', icon: '&#9679;' },
+  { key: 'red', label: 'Poor', icon: '&#9679;' },
+  { key: 'gray', label: 'Irrelevant', icon: '&#9679;' },
+];
+const COLOR_TEXT = { green: 'Good', yellow: 'Average', red: 'Poor', gray: 'Irrelevant', null: 'Pending' };
+const SEVERITY = { gray: 0, green: 1, yellow: 2, red: 3 };
+
+/* ---------- state ---------- */
+
+function uid(prefix) {
+  return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+}
+
+function defaultMatrixState(key) {
+  return { colorOverride: null, defaultElements: [...DEFAULT_ELEMENTS[key]], samples: [] };
+}
+
+function defaultState() {
+  const matrices = {};
+  MATRIX_ORDER.forEach(k => { matrices[k] = defaultMatrixState(k); });
+  return { matrices, settings: { ...DEFAULT_SETTINGS } };
+}
+
+let state = defaultState();
+let activeMatrix = MATRIX_ORDER[0];
+let activeSampleByMatrix = {};
+
+/* ---------- color logic ---------- */
+
+function elementColorResult(el, settings) {
+  if (el.colorOverride) return { color: el.colorOverride, manual: true };
+  const expected = el.expected;
+  if (expected === null || expected === undefined || expected === '') return { color: null, manual: false };
+  if (Math.abs(expected) <= settings.grayBelowWt) return { color: 'gray', manual: false };
+  const nums = (el.measurements || []).filter(v => typeof v === 'number' && !Number.isNaN(v));
+  if (nums.length === 0) return { color: null, manual: false };
+  const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+  const pctDev = Math.abs(avg - expected) / Math.abs(expected) * 100;
+  if (pctDev <= settings.greenPct) return { color: 'green', manual: false };
+  if (pctDev <= settings.yellowPct) return { color: 'yellow', manual: false };
+  return { color: 'red', manual: false };
+}
+
+function elementAvg(el) {
+  const nums = (el.measurements || []).filter(v => typeof v === 'number' && !Number.isNaN(v));
+  if (nums.length === 0) return null;
+  return nums.reduce((a, b) => a + b, 0) / nums.length;
+}
+
+function elementPctDev(el) {
+  const avg = elementAvg(el);
+  const expected = el.expected;
+  if (avg === null || expected === null || expected === undefined || expected === '') return null;
+  if (expected === 0) return avg === 0 ? 0 : Infinity;
+  return Math.abs(avg - expected) / Math.abs(expected) * 100;
+}
+
+function aggregateColorResult(results, override) {
+  if (override) return { color: override, manual: true };
+  const relevant = results.filter(r => r.color && r.color !== 'gray');
+  if (relevant.length === 0) {
+    const anyGray = results.some(r => r.color === 'gray');
+    return { color: anyGray ? 'gray' : null, manual: false };
+  }
+  let worst = relevant[0].color;
+  relevant.forEach(r => { if (SEVERITY[r.color] > SEVERITY[worst]) worst = r.color; });
+  return { color: worst, manual: false };
+}
+
+function sampleColorResult(sample, settings) {
+  const results = (sample.elements || []).map(el => elementColorResult(el, settings));
+  return aggregateColorResult(results, sample.colorOverride);
+}
+
+function matrixColorResult(matrix, settings) {
+  const results = (matrix.samples || []).map(s => sampleColorResult(s, settings));
+  return aggregateColorResult(results, matrix.colorOverride);
+}
+
+/* ---------- badge rendering helpers ---------- */
+
+function badgeHTML(result, size) {
+  const cls = result.color ? result.color : '';
+  const label = COLOR_TEXT[result.color];
+  const pin = result.manual ? '<span class="pin" title="Manually set">&#128204;</span>' : '';
+  return `<span class="badge ${cls} ${size === 'large' ? 'large' : ''}"><span class="dot"></span>${label}${pin}</span>`;
+}
+
+function applyBadge(el, result) {
+  if (!el) return;
+  el.className = 'badge ' + (el.classList.contains('large') ? 'large ' : '') + (result.color || '');
+  const label = COLOR_TEXT[result.color];
+  const pin = result.manual ? '<span class="pin" title="Manually set">&#128204;</span>' : '';
+  el.innerHTML = `<span class="dot"></span>${label}${pin}`;
+}
+
+/* ---------- color popover ---------- */
+
+let popoverCloseHandler = null;
+
+function openColorPopover(anchorEl, currentColor, onSelect) {
+  const pop = document.getElementById('colorPopover');
+  pop.innerHTML = COLOR_OPTIONS.map(o => {
+    const active = (o.key === currentColor) || (o.key === null && !currentColor) ? 'active' : '';
+    return `<button type="button" class="popover-opt ${active}" data-color="${o.key || ''}">${o.icon} ${o.label}</button>`;
+  }).join('');
+  pop.style.display = 'flex';
+  const rect = anchorEl.getBoundingClientRect();
+  const popRect = pop.getBoundingClientRect();
+  let left = rect.left;
+  let top = rect.bottom + 6;
+  if (left + popRect.width > window.innerWidth - 8) left = window.innerWidth - popRect.width - 8;
+  if (left < 8) left = 8;
+  if (top + popRect.height > window.innerHeight - 8) top = rect.top - popRect.height - 6;
+  pop.style.left = left + 'px';
+  pop.style.top = top + 'px';
+
+  pop.querySelectorAll('.popover-opt').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      onSelect(btn.dataset.color || null);
+      closeColorPopover();
+    });
+  });
+
+  if (popoverCloseHandler) document.removeEventListener('mousedown', popoverCloseHandler);
+  popoverCloseHandler = (e) => {
+    if (!pop.contains(e.target) && e.target !== anchorEl && !anchorEl.contains(e.target)) {
+      closeColorPopover();
+    }
+  };
+  document.addEventListener('mousedown', popoverCloseHandler);
+}
+
+function closeColorPopover() {
+  const pop = document.getElementById('colorPopover');
+  pop.style.display = 'none';
+  if (popoverCloseHandler) { document.removeEventListener('mousedown', popoverCloseHandler); popoverCloseHandler = null; }
+}
+
+/* ---------- legend ---------- */
+
+function renderLegend() {
+  const s = state.settings;
+  const legend = document.getElementById('legend');
+  legend.innerHTML = `
+    <span class="item"><span class="dot" style="background:var(--good)"></span>Good — within ${s.greenPct}%</span>
+    <span class="item"><span class="dot" style="background:var(--avg)"></span>Average — within ${s.yellowPct}%</span>
+    <span class="item"><span class="dot" style="background:var(--bad)"></span>Poor — above ${s.yellowPct}%</span>
+    <span class="item"><span class="dot" style="background:var(--gray)"></span>Irrelevant — expected &lt; ${s.grayBelowWt} wt%</span>
+  `;
+}
+
+/* ---------- matrix tabs ---------- */
+
+function renderMatrixTabs() {
+  const nav = document.getElementById('matrixTabs');
+  nav.innerHTML = MATRIX_ORDER.map(key => {
+    const m = state.matrices[key];
+    const result = matrixColorResult(m, state.settings);
+    const dotColor = result.color || '';
+    return `<button type="button" class="matrix-tab ${key === activeMatrix ? 'active' : ''}" data-matrix-tab="${key}">
+      <span class="dot-only ${dotColor}"></span>${MATRIX_LABELS[key]}${result.manual ? '<span class="pin" title="Manually set">&#128204;</span>' : ''}
+    </button>`;
+  }).join('');
+  nav.querySelectorAll('[data-matrix-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeMatrix = btn.dataset.matrixTab;
+      renderAll();
+    });
+  });
+}
+
+/* ---------- matrix summary bar ---------- */
+
+function renderMatrixSummary() {
+  const bar = document.getElementById('matrixSummary');
+  const matrix = state.matrices[activeMatrix];
+  const result = matrixColorResult(matrix, state.settings);
+  bar.innerHTML = `
+    <div class="status-block">
+      <span class="label">Matrix status</span>
+      <span id="matrixColorBadge">${badgeHTML(result, 'large')}</span>
+    </div>
+    <button type="button" class="add-sample-btn" id="addSampleBtn">+ Add calibrant</button>
+  `;
+  const badge = bar.querySelector('#matrixColorBadge .badge');
+  badge.style.cursor = 'pointer';
+  badge.addEventListener('click', () => {
+    openColorPopover(badge, matrix.colorOverride, (color) => {
+      matrix.colorOverride = color;
+      scheduleSave();
+      renderAll();
+    });
+  });
+  bar.querySelector('#addSampleBtn').addEventListener('click', addSample);
+}
+
+function addSample() {
+  const matrix = state.matrices[activeMatrix];
+  const id = uid('smp_');
+  const sample = {
+    id,
+    name: `Calibrant ${matrix.samples.length + 1}`,
+    colorOverride: null,
+    elements: matrix.defaultElements.map(sym => ({ id: uid('el_'), symbol: sym, expected: null, measurements: [], colorOverride: null })),
+  };
+  matrix.samples.push(sample);
+  activeSampleByMatrix[activeMatrix] = id;
+  scheduleSave();
+  renderAll();
+}
+
+/* ---------- sample tabs ---------- */
+
+function renderSampleTabs() {
+  const nav = document.getElementById('sampleTabs');
+  const matrix = state.matrices[activeMatrix];
+  if (!activeSampleByMatrix[activeMatrix] && matrix.samples.length > 0) {
+    activeSampleByMatrix[activeMatrix] = matrix.samples[0].id;
+  }
+  const activeId = activeSampleByMatrix[activeMatrix];
+  nav.innerHTML = matrix.samples.map(s => {
+    const result = sampleColorResult(s, state.settings);
+    const dotColor = result.color || '';
+    return `<button type="button" class="sample-tab ${s.id === activeId ? 'active' : ''}" data-sample-tab="${s.id}">
+      <span class="dot-only ${dotColor}"></span>${escapeHTML(s.name)}${result.manual ? '<span class="pin">&#128204;</span>' : ''}
+    </button>`;
+  }).join('') + `<button type="button" class="add-sample-btn" id="addSampleBtnInline">+ Add</button>`;
+
+  nav.querySelectorAll('[data-sample-tab]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeSampleByMatrix[activeMatrix] = btn.dataset.sampleTab;
+      renderAll();
+    });
+  });
+  const inlineAdd = nav.querySelector('#addSampleBtnInline');
+  if (inlineAdd) inlineAdd.addEventListener('click', addSample);
+}
+
+/* ---------- sample editor ---------- */
+
+function escapeHTML(str) {
+  return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function fmtNum(n, digits) {
+  if (n === null || n === undefined || Number.isNaN(n)) return '—';
+  if (!Number.isFinite(n)) return '∞';
+  return n.toFixed(digits === undefined ? 2 : digits);
+}
+
+function renderSampleEditor() {
+  const main = document.getElementById('sampleEditor');
+  const matrix = state.matrices[activeMatrix];
+  const activeId = activeSampleByMatrix[activeMatrix];
+  const sample = matrix.samples.find(s => s.id === activeId);
+
+  if (!sample) {
+    main.innerHTML = `<div class="empty-state">
+      <p>No calibrants yet for ${MATRIX_LABELS[activeMatrix]}.</p>
+      <button type="button" class="btn-secondary cta" id="emptyAddSample">+ Add your first calibrant</button>
+    </div>`;
+    main.querySelector('#emptyAddSample').addEventListener('click', addSample);
+    return;
+  }
+
+  const sResult = sampleColorResult(sample, state.settings);
+
+  let html = `
+    <div class="sample-header">
+      <input type="text" class="sample-name-input" id="sampleNameInput" value="${escapeHTML(sample.name)}" placeholder="Calibrant name">
+      <div class="sample-header-actions">
+        <span id="sampleColorBadge">${badgeHTML(sResult, 'large')}</span>
+        <button type="button" class="btn-danger" id="deleteSampleBtn">Delete</button>
+      </div>
+    </div>
+  `;
+
+  if (activeMatrix === 'nickel') {
+    const present = new Set(sample.elements.map(e => e.symbol.toLowerCase()));
+    html += `<div class="suggested-row"><span class="label">Common in Inconel / Monel / Hastelloy:</span>` +
+      NICKEL_SUGGESTED_EXTRA.map(sym => {
+        const has = present.has(sym.toLowerCase());
+        return `<button type="button" class="chip-btn" data-suggest="${sym}" ${has ? 'disabled' : ''}>${has ? '✓ ' : '+ '}${sym}</button>`;
+      }).join('') + `</div>`;
+  }
+
+  html += `
+    <div class="elements-list" id="elementsList">
+      <div class="elements-head">
+        <span style="width:78px;">Element</span>
+        <span style="width:78px;">Expected wt%</span>
+        <span style="flex:1;">Measurements wt%</span>
+        <span style="width:64px;">Avg</span>
+        <span style="width:64px;">&Delta;%</span>
+        <span style="width:130px;">Status</span>
+        <span style="width:24px;"></span>
+      </div>
+  `;
+  sample.elements.forEach(el => { html += elementRowHTML(el); });
+  html += `</div>`;
+
+  html += `
+    <div class="add-element-row">
+      <input type="text" id="newElementSymbol" list="elementSymbolsList" placeholder="Element symbol" maxlength="6">
+      <button type="button" id="addElementBtn">+ Add element</button>
+    </div>
+  `;
+
+  main.innerHTML = html;
+
+  // datalist
+  const datalist = document.getElementById('elementSymbolsList');
+  datalist.innerHTML = PERIODIC_SYMBOLS.map(s => `<option value="${s}">`).join('');
+
+  wireSampleHeaderEvents(sample);
+  if (activeMatrix === 'nickel') wireSuggestedEvents(sample);
+  wireElementRowEvents(sample);
+  wireAddElementEvents(sample);
+}
+
+function elementRowHTML(el) {
+  const result = elementColorResult(el, state.settings);
+  const avg = elementAvg(el);
+  const pct = elementPctDev(el);
+  const measureChips = (el.measurements || []).map((v, i) => `
+    <span class="measure-chip">
+      <input type="number" step="any" inputmode="decimal" value="${v === null || v === undefined ? '' : v}" data-meas-index="${i}">
+      <button type="button" class="rm" data-rm-meas="${i}">&times;</button>
+    </span>
+  `).join('');
+
+  return `
+    <div class="element-row" data-el-id="${el.id}">
+      <div class="el-symbol-wrap">
+        <input type="text" class="el-symbol" list="elementSymbolsList" value="${escapeHTML(el.symbol)}" maxlength="6" data-role="symbol">
+      </div>
+      <div class="el-field">
+        <label>Expected</label>
+        <input type="number" step="any" inputmode="decimal" class="el-expected" data-role="expected" value="${el.expected === null || el.expected === undefined ? '' : el.expected}">
+      </div>
+      <div class="measurements-block">
+        <label>Measurements</label>
+        <div class="measurements-chips" data-role="chips">
+          ${measureChips}
+          <button type="button" class="add-measure" data-role="add-measure">+ value</button>
+        </div>
+      </div>
+      <div class="el-computed">
+        <label>Avg</label>
+        <span class="val mono" data-role="avg">${fmtNum(avg)}</span>
+      </div>
+      <div class="el-computed">
+        <label>&Delta;%</label>
+        <span class="val mono" data-role="pct">${pct === null ? '—' : fmtNum(pct, 1) + '%'}</span>
+      </div>
+      <div data-role="badge-wrap">${badgeHTML(result)}</div>
+      <div class="el-actions">
+        <button type="button" class="remove-el" data-role="remove" title="Remove element">&times;</button>
+      </div>
+    </div>
+  `;
+}
+
+function wireSampleHeaderEvents(sample) {
+  const nameInput = document.getElementById('sampleNameInput');
+  nameInput.addEventListener('change', () => {
+    sample.name = nameInput.value.trim() || sample.name;
+    scheduleSave();
+    renderAll();
+  });
+  const badge = document.querySelector('#sampleColorBadge .badge');
+  badge.style.cursor = 'pointer';
+  badge.addEventListener('click', () => {
+    openColorPopover(badge, sample.colorOverride, (color) => {
+      sample.colorOverride = color;
+      scheduleSave();
+      renderAll();
+    });
+  });
+  document.getElementById('deleteSampleBtn').addEventListener('click', () => {
+    if (!confirm(`Delete calibrant "${sample.name}"? This cannot be undone.`)) return;
+    const matrix = state.matrices[activeMatrix];
+    matrix.samples = matrix.samples.filter(s => s.id !== sample.id);
+    activeSampleByMatrix[activeMatrix] = matrix.samples.length ? matrix.samples[0].id : null;
+    scheduleSave();
+    renderAll();
+  });
+}
+
+function wireSuggestedEvents(sample) {
+  document.querySelectorAll('[data-suggest]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sym = btn.dataset.suggest;
+      if (sample.elements.some(e => e.symbol.toLowerCase() === sym.toLowerCase())) return;
+      sample.elements.push({ id: uid('el_'), symbol: sym, expected: null, measurements: [], colorOverride: null });
+      scheduleSave();
+      renderAll();
+    });
+  });
+}
+
+function wireAddElementEvents(sample) {
+  const input = document.getElementById('newElementSymbol');
+  const btn = document.getElementById('addElementBtn');
+  function commitAdd() {
+    const sym = input.value.trim();
+    if (!sym) return;
+    if (sample.elements.some(e => e.symbol.toLowerCase() === sym.toLowerCase())) {
+      input.style.borderColor = 'var(--bad)';
+      return;
+    }
+    sample.elements.push({ id: uid('el_'), symbol: sym, expected: null, measurements: [], colorOverride: null });
+    scheduleSave();
+    renderAll();
+    setTimeout(() => {
+      const list = document.getElementById('elementsList');
+      const rows = list.querySelectorAll('.element-row');
+      const last = rows[rows.length - 1];
+      if (last) last.querySelector('[data-role="expected"]').focus();
+    }, 0);
+  }
+  btn.addEventListener('click', commitAdd);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commitAdd(); } });
+}
+
+function wireElementRowEvents(sample) {
+  document.querySelectorAll('#elementsList .element-row').forEach(row => {
+    const elId = row.dataset.elId;
+    const el = sample.elements.find(e => e.id === elId);
+    if (!el) return;
+
+    const symbolInput = row.querySelector('[data-role="symbol"]');
+    symbolInput.addEventListener('change', () => {
+      const val = symbolInput.value.trim();
+      if (!val) { symbolInput.value = el.symbol; return; }
+      const dup = sample.elements.some(e => e.id !== el.id && e.symbol.toLowerCase() === val.toLowerCase());
+      el.symbol = val;
+      scheduleSave();
+      if (dup) { symbolInput.classList.add('dup'); } else { renderAll(); }
+    });
+
+    const expectedInput = row.querySelector('[data-role="expected"]');
+    expectedInput.addEventListener('input', () => {
+      const v = expectedInput.value;
+      el.expected = v === '' ? null : parseFloat(v);
+      recomputeRow(sample, el);
+      scheduleSave();
+    });
+
+    row.querySelectorAll('[data-meas-index]').forEach(input => {
+      input.addEventListener('input', () => {
+        const idx = parseInt(input.dataset.measIndex, 10);
+        const v = input.value;
+        el.measurements[idx] = v === '' ? null : parseFloat(v);
+        recomputeRow(sample, el);
+        scheduleSave();
+      });
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          el.measurements.push(null);
+          scheduleSave();
+          renderAll();
+          setTimeout(() => {
+            const r = document.querySelector(`.element-row[data-el-id="${el.id}"]`);
+            if (!r) return;
+            const chips = r.querySelectorAll('[data-meas-index]');
+            const lastChip = chips[chips.length - 1];
+            if (lastChip) lastChip.focus();
+          }, 0);
+        }
+      });
+    });
+
+    row.querySelectorAll('[data-rm-meas]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.rmMeas, 10);
+        el.measurements.splice(idx, 1);
+        scheduleSave();
+        renderAll();
+      });
+    });
+
+    const addMeasureBtn = row.querySelector('[data-role="add-measure"]');
+    addMeasureBtn.addEventListener('click', () => {
+      el.measurements.push(null);
+      scheduleSave();
+      renderAll();
+      setTimeout(() => {
+        const r = document.querySelector(`.element-row[data-el-id="${el.id}"]`);
+        if (!r) return;
+        const chips = r.querySelectorAll('[data-meas-index]');
+        const lastChip = chips[chips.length - 1];
+        if (lastChip) lastChip.focus();
+      }, 0);
+    });
+
+    const badge = row.querySelector('[data-role="badge-wrap"] .badge');
+    badge.style.cursor = 'pointer';
+    badge.addEventListener('click', () => {
+      openColorPopover(badge, el.colorOverride, (color) => {
+        el.colorOverride = color;
+        recomputeRow(sample, el);
+        scheduleSave();
+      });
+    });
+
+    row.querySelector('[data-role="remove"]').addEventListener('click', () => {
+      sample.elements = sample.elements.filter(e => e.id !== el.id);
+      scheduleSave();
+      renderAll();
+    });
+  });
+}
+
+// Surgical update: recompute one row's avg/%/badge plus the sample & matrix
+// badges, without rebuilding the whole editor (keeps focus while typing).
+function recomputeRow(sample, el) {
+  const row = document.querySelector(`.element-row[data-el-id="${el.id}"]`);
+  if (row) {
+    const result = elementColorResult(el, state.settings);
+    row.querySelector('[data-role="avg"]').textContent = fmtNum(elementAvg(el));
+    const pct = elementPctDev(el);
+    row.querySelector('[data-role="pct"]').textContent = pct === null ? '—' : fmtNum(pct, 1) + '%';
+    applyBadge(row.querySelector('[data-role="badge-wrap"] .badge'), result);
+  }
+  updateSampleColorUI(sample);
+  updateMatrixColorUI();
+}
+
+function updateSampleColorUI(sample) {
+  const result = sampleColorResult(sample, state.settings);
+  const tab = document.querySelector(`.sample-tab[data-sample-tab="${sample.id}"]`);
+  if (tab) {
+    const dot = tab.querySelector('.dot-only');
+    dot.className = 'dot-only ' + (result.color || '');
+    const pin = tab.querySelector('.pin');
+    if (result.manual && !pin) tab.insertAdjacentHTML('beforeend', '<span class="pin">&#128204;</span>');
+    if (!result.manual && pin) pin.remove();
+  }
+  const headerBadge = document.querySelector('#sampleColorBadge .badge');
+  if (headerBadge) applyBadge(headerBadge, result);
+}
+
+function updateMatrixColorUI() {
+  const matrix = state.matrices[activeMatrix];
+  const result = matrixColorResult(matrix, state.settings);
+  const tab = document.querySelector(`.matrix-tab[data-matrix-tab="${activeMatrix}"]`);
+  if (tab) {
+    const dot = tab.querySelector('.dot-only');
+    dot.className = 'dot-only ' + (result.color || '');
+    const pin = tab.querySelector('.pin');
+    if (result.manual && !pin) tab.insertAdjacentHTML('beforeend', '<span class="pin">&#128204;</span>');
+    if (!result.manual && pin) pin.remove();
+  }
+  const summaryBadge = document.querySelector('#matrixColorBadge .badge');
+  if (summaryBadge) applyBadge(summaryBadge, result);
+}
+
+/* ---------- settings modal ---------- */
+
+function renderSettingsBody() {
+  const body = document.getElementById('settingsBody');
+  const s = state.settings;
+  let html = `
+    <div class="settings-section">
+      <h3>Color thresholds</h3>
+      <p class="hint">Percent deviation of the measured average from the certificate's expected value.</p>
+      <div class="threshold-row">
+        <label>Good — within</label>
+        <input type="number" step="any" id="greenPctInput" value="${s.greenPct}"> %
+      </div>
+      <div class="threshold-row">
+        <label>Average — within</label>
+        <input type="number" step="any" id="yellowPctInput" value="${s.yellowPct}"> %
+      </div>
+      <div class="threshold-row">
+        <label>Irrelevant — expected value below</label>
+        <input type="number" step="any" id="grayInput" value="${s.grayBelowWt}"> wt%
+      </div>
+    </div>
+    <div class="settings-section">
+      <h3>Default elements per matrix</h3>
+      <p class="hint">Applied to new calibrants only — existing ones keep their current element list.</p>
+      ${MATRIX_ORDER.map(key => matrixDefaultsBlockHTML(key)).join('')}
+    </div>
+  `;
+  body.innerHTML = html;
+  wireSettingsEvents();
+}
+
+function matrixDefaultsBlockHTML(key) {
+  const els = state.matrices[key].defaultElements;
+  return `
+    <div class="matrix-defaults-block" data-matrix-key="${key}">
+      <h4>${MATRIX_LABELS[key]}</h4>
+      <div class="default-chips">
+        ${els.map((sym, i) => `<span class="default-chip">${escapeHTML(sym)}<button type="button" class="rm" data-rm-default="${key}:${i}">&times;</button></span>`).join('')}
+        <span class="default-chip-add">
+          <input type="text" list="elementSymbolsList" placeholder="+" maxlength="6" data-add-default-input="${key}">
+          <button type="button" data-add-default-btn="${key}">Add</button>
+        </span>
+      </div>
+    </div>
+  `;
+}
+
+function wireSettingsEvents() {
+  const greenInput = document.getElementById('greenPctInput');
+  const yellowInput = document.getElementById('yellowPctInput');
+  const grayInput = document.getElementById('grayInput');
+
+  greenInput.addEventListener('change', () => {
+    const v = parseFloat(greenInput.value);
+    if (!Number.isNaN(v) && v >= 0) state.settings.greenPct = v;
+    scheduleSave();
+    renderLegend();
+    renderAll();
+  });
+  yellowInput.addEventListener('change', () => {
+    const v = parseFloat(yellowInput.value);
+    if (!Number.isNaN(v) && v >= 0) state.settings.yellowPct = v;
+    scheduleSave();
+    renderLegend();
+    renderAll();
+  });
+  grayInput.addEventListener('change', () => {
+    const v = parseFloat(grayInput.value);
+    if (!Number.isNaN(v) && v >= 0) state.settings.grayBelowWt = v;
+    scheduleSave();
+    renderLegend();
+    renderAll();
+  });
+
+  document.querySelectorAll('[data-rm-default]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const [key, idx] = btn.dataset.rmDefault.split(':');
+      state.matrices[key].defaultElements.splice(parseInt(idx, 10), 1);
+      scheduleSave();
+      renderSettingsBody();
+    });
+  });
+
+  document.querySelectorAll('[data-add-default-btn]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.addDefaultBtn;
+      const input = document.querySelector(`[data-add-default-input="${key}"]`);
+      const sym = input.value.trim();
+      if (!sym) return;
+      const arr = state.matrices[key].defaultElements;
+      if (!arr.some(s => s.toLowerCase() === sym.toLowerCase())) arr.push(sym);
+      scheduleSave();
+      renderSettingsBody();
+    });
+  });
+
+  document.querySelectorAll('[data-add-default-input]').forEach(input => {
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        document.querySelector(`[data-add-default-btn="${input.dataset.addDefaultInput}"]`).click();
+      }
+    });
+  });
+}
+
+function openSettings() {
+  renderSettingsBody();
+  document.getElementById('settingsModal').style.display = 'flex';
+}
+function closeSettings() {
+  document.getElementById('settingsModal').style.display = 'none';
+}
+
+/* ---------- full render ---------- */
+
+function renderAll() {
+  renderLegend();
+  renderMatrixTabs();
+  renderMatrixSummary();
+  renderSampleTabs();
+  renderSampleEditor();
+}
+
+/* ---------- Firebase persistence ----------
+   Fill in your real project values — see SETUP.md. Until you do, the app
+   works fine locally but nothing is saved between visits/devices. */
+
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT",
+  storageBucket: "YOUR_PROJECT.firebasestorage.app",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID",
+};
+
+let db = null;
+let validationDocRef = null;
+let isLoading = true;
+let saveTimer = null;
+
+function setSyncStatus(text) {
+  const el = document.getElementById('syncStatus');
+  if (el) el.textContent = text;
+}
+
+function scheduleSave() {
+  if (isLoading || !validationDocRef) return;
+  setSyncStatus('Saving…');
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(saveToFirestore, 800);
+}
+
+async function saveToFirestore() {
+  if (!validationDocRef) return;
+  try {
+    await validationDocRef.set({
+      data: state,
+      updated_at: firebase.firestore.FieldValue.serverTimestamp(),
+    });
+    setSyncStatus('Saved ✓');
+  } catch (err) {
+    console.error('Save to Firestore failed:', err);
+    setSyncStatus('Save failed — check connection');
+  }
+}
+
+async function loadFromFirestore() {
+  if (!validationDocRef) { isLoading = false; return; }
+  try {
+    const doc = await validationDocRef.get();
+    if (doc.exists && doc.data() && doc.data().data) {
+      const payload = doc.data().data;
+      const fresh = defaultState();
+      if (payload.matrices) {
+        MATRIX_ORDER.forEach(key => {
+          if (payload.matrices[key]) {
+            fresh.matrices[key] = {
+              colorOverride: payload.matrices[key].colorOverride || null,
+              defaultElements: Array.isArray(payload.matrices[key].defaultElements) && payload.matrices[key].defaultElements.length
+                ? payload.matrices[key].defaultElements : fresh.matrices[key].defaultElements,
+              samples: Array.isArray(payload.matrices[key].samples) ? payload.matrices[key].samples : [],
+            };
+          }
+        });
+      }
+      if (payload.settings) fresh.settings = { ...fresh.settings, ...payload.settings };
+      state = fresh;
+      setSyncStatus('Loaded from cloud');
+    } else {
+      setSyncStatus('No saved data yet — starting fresh');
+    }
+  } catch (err) {
+    console.error('Load from Firestore failed:', err);
+    setSyncStatus('Offline — showing local data');
+  }
+  isLoading = false;
+}
+
+function initFirebase() {
+  if (firebaseConfig.apiKey === 'YOUR_API_KEY') {
+    setSyncStatus('Not connected — see SETUP.md');
+    isLoading = false;
+    return;
+  }
+  try {
+    firebase.initializeApp(firebaseConfig);
+    db = firebase.firestore();
+    validationDocRef = db.collection('validation').doc('state');
+  } catch (err) {
+    console.error('Firebase init failed:', err);
+    setSyncStatus('Firebase init failed');
+    isLoading = false;
+  }
+}
+
+/* ---------- self-update mechanism (same pattern as Split Builder) ---------- */
+
+function applySelfUpdate() {
+  location.replace(location.pathname + '?_=' + Date.now());
+}
+
+async function checkForUpdate(manual) {
+  const statusEl = document.getElementById('updateCheckStatus');
+  if (manual) statusEl.textContent = 'Checking…';
+  try {
+    const res = await fetch('./index.html?_=' + Date.now(), { cache: 'no-store' });
+    if (!res.ok) {
+      if (manual) statusEl.textContent = 'Could not check (server error).';
+      return;
+    }
+    const html = await res.text();
+    const match = html.match(/const APP_VERSION\s*=\s*'([^']+)'/);
+    const remoteVersion = match ? match[1] : null;
+    if (!remoteVersion) {
+      if (manual) statusEl.textContent = 'Could not read remote version.';
+      return;
+    }
+    if (remoteVersion === APP_VERSION) {
+      if (manual) statusEl.textContent = `You're up to date (${APP_VERSION}).`;
+      return;
+    }
+    if (manual) statusEl.textContent = '';
+    if (!manual) {
+      const dismissed = localStorage.getItem('semValidationDismissedVersion');
+      if (dismissed === remoteVersion) return;
+    }
+    document.getElementById('updateBanner').style.display = 'flex';
+    document.getElementById('updateReloadBtn').onclick = applySelfUpdate;
+    document.getElementById('updateDismiss').onclick = () => {
+      localStorage.setItem('semValidationDismissedVersion', remoteVersion);
+      document.getElementById('updateBanner').style.display = 'none';
+    };
+  } catch (err) {
+    if (manual) statusEl.textContent = "Couldn't reach the server — you may be offline.";
+  }
+}
+
+/* ---------- boot ---------- */
+
+document.getElementById('settingsBtn').addEventListener('click', openSettings);
+document.getElementById('settingsClose').addEventListener('click', closeSettings);
+document.getElementById('settingsModal').addEventListener('click', (e) => {
+  if (e.target.id === 'settingsModal') closeSettings();
+});
+
+document.getElementById('appVersion').textContent = `${APP_VERSION} · ${APP_VERSION_DATE}`;
+document.getElementById('checkUpdateBtn').addEventListener('click', () => checkForUpdate(true));
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkForUpdate(false); });
+window.addEventListener('pageshow', () => checkForUpdate(false));
+
+async function boot() {
+  initFirebase();
+  await loadFromFirestore();
+  renderAll();
+  checkForUpdate(false);
+}
+boot();
+</script>
+</body>
+</html>

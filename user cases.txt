@@ -1,0 +1,23 @@
+I need to validate the following matrices: steel, stainless steel, aluminum, nickle, titanium, copper
+default elements per matrix:
+steel - iron, chromium, nickle, silicon. mo. mn
+stainless - fe, cr, ni, si. mo, mn, al, nb, ti
+aluminum - al, cu, zn, mg, si
+nickle - ni, co, cr, fe, suggest extra elements use in nickle alloys like Inconel, monel, hasteloy
+titanium - ti, al, v
+
+terminology:
+-there are several matrices (described above)
+-each matrix has several calibrants/samples
+-each sample has the following fields: name, expected values (from certificate) per element, measured values per element (there could be several measurments)
+-colors: green - good (within 5%), yellow - average(within 20%), red - bad(above 20%), gray - irrelevant (expected value smaller than 0.1 wt%). the color relate to the resault values and can relate to the sample and the matrix themselves
+
+-i want a different tab for each matrix
+-each matrix has 'sub tabs' one for each sample
+-allow me to edit the name of a sample, add/remove elements, insert expected value, insert measurment values, add more measurments
+-show the average of all the measurments (per element) and comappre with the expected value and color accordingly.
+-allow me to edit the numbers of the colors in settings/options
+-when i add a sample to a matrix it starts with the default elements set for that matrix, i can add or remove elements.
+-allow me to change the default elements for the matrices
+-allow me to manually set the colors as i see fit but have it marked somehow
+-allow me to set the color for the sample and the matrix
