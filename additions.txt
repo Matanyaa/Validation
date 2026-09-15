@@ -1,0 +1,7 @@
+clarification - a single measurement has values for all elements as a whole (it can leave elements empty but all first values belong to first measurement and all second values to second measurement etc. - treat it accordingly e.g. adding a measurement adds spots to all elements). all values currently in the app were entered in the correct order
+
+give me the ability to exclude measurments from the average - this will exclude all element specific values under this measurement. mark it accordingly.
+
+add stdev to the calculation of the average and show the error in percentage of the average from the expected value
+
+add a way to generate a nice report summing the validation of a single matrix - this should show the expected values, measurments color accordingly - important: before you start working on any of the things here, lets iterate and talk over how to make this report, then ask for my permission to build
