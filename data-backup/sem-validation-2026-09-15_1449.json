@@ -1,0 +1,668 @@
+{
+  "app": "sem-validation",
+  "exportedAt": "2026-09-15T11:49:47.256Z",
+  "version": "v1.2.0",
+  "state": {
+    "matrices": {
+      "steel": {
+        "colorOverride": null,
+        "defaultElements": [
+          "Fe",
+          "Cr",
+          "Ni",
+          "Si",
+          "Mo",
+          "Mn"
+        ],
+        "samples": [
+          {
+            "colorOverride": null,
+            "name": "Calibrant 1",
+            "elements": [
+              {
+                "measurements": [],
+                "colorOverride": null,
+                "symbol": "Fe",
+                "expected": null,
+                "id": "el_mu1paaksq7lqn"
+              },
+              {
+                "measurements": [],
+                "expected": null,
+                "colorOverride": null,
+                "symbol": "Cr",
+                "id": "el_mu1paaksw7x6f"
+              },
+              {
+                "measurements": [],
+                "symbol": "Ni",
+                "id": "el_mu1paaksgqeki",
+                "colorOverride": null,
+                "expected": null
+              },
+              {
+                "symbol": "Si",
+                "measurements": [],
+                "id": "el_mu1paaksx4d2c",
+                "colorOverride": null,
+                "expected": null
+              },
+              {
+                "id": "el_mu1paaks5tlpd",
+                "measurements": [],
+                "colorOverride": null,
+                "expected": null,
+                "symbol": "Mo"
+              },
+              {
+                "colorOverride": null,
+                "expected": null,
+                "measurements": [],
+                "id": "el_mu1paaksdfjza",
+                "symbol": "Mn"
+              }
+            ],
+            "id": "smp_mu1paaksu85g6"
+          }
+        ]
+      },
+      "stainless": {
+        "colorOverride": null,
+        "defaultElements": [
+          "Fe",
+          "Cr",
+          "Ni",
+          "Si",
+          "Mo",
+          "Mn",
+          "Al",
+          "Nb",
+          "Ti"
+        ],
+        "samples": [
+          {
+            "id": "smp_mu2io7i3r4woc",
+            "colorOverride": null,
+            "name": "BS 184 (13-8Mo)",
+            "elements": [
+              {
+                "colorOverride": null,
+                "measurements": [
+                  78.6,
+                  77.28,
+                  81.08,
+                  78.1
+                ],
+                "id": "el_mu2io7i36vhqu",
+                "expected": null,
+                "symbol": "Fe"
+              },
+              {
+                "symbol": "Cr",
+                "measurements": [
+                  11.8,
+                  12.41,
+                  14.11,
+                  12.3
+                ],
+                "id": "el_mu2io7i37noyr",
+                "colorOverride": null,
+                "expected": null
+              },
+              {
+                "symbol": "Ni",
+                "id": "el_mu2io7i3n80em",
+                "measurements": [
+                  5.2,
+                  6.11,
+                  3.1,
+                  5.8
+                ],
+                "expected": null,
+                "colorOverride": null
+              },
+              {
+                "measurements": [
+                  0.2,
+                  0.2,
+                  0.6,
+                  0.2
+                ],
+                "id": "el_mu2io7i3dyvid",
+                "expected": null,
+                "symbol": "Si",
+                "colorOverride": null
+              },
+              {
+                "expected": null,
+                "symbol": "Mo",
+                "id": "el_mu2io7i3r2j3w",
+                "measurements": [
+                  2.5,
+                  2.3,
+                  0.4,
+                  2.2
+                ],
+                "colorOverride": null
+              },
+              {
+                "symbol": "Mn",
+                "expected": null,
+                "id": "el_mu2io7i3tyxjm",
+                "measurements": [
+                  0.2,
+                  0.4,
+                  0.7,
+                  0.1
+                ],
+                "colorOverride": null
+              },
+              {
+                "id": "el_mu2io7i349lef",
+                "expected": null,
+                "colorOverride": null,
+                "symbol": "Al",
+                "measurements": [
+                  1.5,
+                  1.3,
+                  0,
+                  1.3
+                ]
+              },
+              {
+                "expected": null,
+                "measurements": [],
+                "symbol": "Nb",
+                "colorOverride": null,
+                "id": "el_mu2io7i3wvhkf"
+              },
+              {
+                "id": "el_mu2io7i3aijoe",
+                "measurements": [],
+                "symbol": "Ti",
+                "colorOverride": null,
+                "expected": null
+              }
+            ]
+          },
+          {
+            "id": "smp_mu2iy08kcabhs",
+            "name": "SS 71",
+            "colorOverride": null,
+            "elements": [
+              {
+                "colorOverride": null,
+                "id": "el_mu2iy08kqwiva",
+                "measurements": [
+                  77.52,
+                  75.92,
+                  77.48
+                ],
+                "symbol": "Fe",
+                "expected": null
+              },
+              {
+                "measurements": [
+                  20.78,
+                  22.48,
+                  21.72
+                ],
+                "expected": null,
+                "symbol": "Cr",
+                "id": "el_mu2iy08kn4zph",
+                "colorOverride": null
+              },
+              {
+                "colorOverride": null,
+                "expected": null,
+                "measurements": [
+                  0.1,
+                  0.1,
+                  0.1
+                ],
+                "symbol": "Ni",
+                "id": "el_mu2iy08kr7r0d"
+              },
+              {
+                "colorOverride": null,
+                "measurements": [
+                  0.5,
+                  0.6,
+                  0.5
+                ],
+                "expected": null,
+                "id": "el_mu2iy08k99js9",
+                "symbol": "Si"
+              },
+              {
+                "expected": null,
+                "measurements": [
+                  0.1,
+                  0,
+                  0
+                ],
+                "colorOverride": null,
+                "id": "el_mu2iy08kquqy9",
+                "symbol": "Mo"
+              },
+              {
+                "colorOverride": null,
+                "symbol": "Mn",
+                "measurements": [
+                  1,
+                  0.9,
+                  0.2
+                ],
+                "expected": null,
+                "id": "el_mu2iy08kz732n"
+              },
+              {
+                "measurements": [],
+                "symbol": "Al",
+                "expected": null,
+                "colorOverride": null,
+                "id": "el_mu2iy08kk34iv"
+              },
+              {
+                "id": "el_mu2iy08k1bd0r",
+                "symbol": "Nb",
+                "measurements": [],
+                "colorOverride": null,
+                "expected": null
+              },
+              {
+                "id": "el_mu2iy08kp8or4",
+                "expected": null,
+                "measurements": [],
+                "symbol": "Ti",
+                "colorOverride": null
+              }
+            ]
+          },
+          {
+            "elements": [
+              {
+                "id": "el_mu2iy234y3qvg",
+                "expected": null,
+                "measurements": [
+                  80.88,
+                  81.1,
+                  80.62
+                ],
+                "symbol": "Fe",
+                "colorOverride": null
+              },
+              {
+                "expected": null,
+                "measurements": [
+                  14.41,
+                  14.2,
+                  14.39
+                ],
+                "symbol": "Cr",
+                "colorOverride": null,
+                "id": "el_mu2iy2342jq2j"
+              },
+              {
+                "colorOverride": null,
+                "id": "el_mu2iy2345ps4e",
+                "measurements": [
+                  2.8,
+                  2.9,
+                  3.2
+                ],
+                "expected": null,
+                "symbol": "Ni"
+              },
+              {
+                "id": "el_mu2iy234dsde1",
+                "symbol": "Si",
+                "expected": null,
+                "colorOverride": null,
+                "measurements": [
+                  0.6,
+                  0.6,
+                  0.6
+                ]
+              },
+              {
+                "measurements": [
+                  0.5,
+                  0.4,
+                  0.4
+                ],
+                "expected": null,
+                "colorOverride": null,
+                "symbol": "Mo",
+                "id": "el_mu2iy234w9urg"
+              },
+              {
+                "expected": null,
+                "colorOverride": null,
+                "symbol": "Mn",
+                "id": "el_mu2iy234z70j6",
+                "measurements": [
+                  0.8,
+                  0.8,
+                  0.8
+                ]
+              },
+              {
+                "measurements": [],
+                "colorOverride": null,
+                "symbol": "Al",
+                "id": "el_mu2iy234ad2s7",
+                "expected": null
+              },
+              {
+                "measurements": [],
+                "id": "el_mu2iy2343qv14",
+                "colorOverride": null,
+                "expected": null,
+                "symbol": "Nb"
+              },
+              {
+                "symbol": "Ti",
+                "colorOverride": null,
+                "id": "el_mu2iy234g0dhb",
+                "expected": null,
+                "measurements": []
+              }
+            ],
+            "name": "BS 185A (15-5)",
+            "id": "smp_mu2iy23451lfi",
+            "colorOverride": null
+          },
+          {
+            "name": "SS 69",
+            "colorOverride": null,
+            "id": "smp_mu2iy3cf26g2n",
+            "elements": [
+              {
+                "symbol": "Fe",
+                "measurements": [
+                  87.39,
+                  74.77,
+                  88.91,
+                  87.59
+                ],
+                "expected": null,
+                "colorOverride": null,
+                "id": "el_mu2iy3cfkplzk"
+              },
+              {
+                "expected": null,
+                "id": "el_mu2iy3cffl2cq",
+                "measurements": [
+                  11.61,
+                  23.82,
+                  9.59,
+                  11.11
+                ],
+                "colorOverride": null,
+                "symbol": "Cr"
+              },
+              {
+                "measurements": [
+                  0,
+                  0,
+                  0,
+                  0.1
+                ],
+                "colorOverride": null,
+                "id": "el_mu2iy3cfgu84k",
+                "expected": null,
+                "symbol": "Ni"
+              },
+              {
+                "id": "el_mu2iy3cfz7qhy",
+                "expected": null,
+                "colorOverride": null,
+                "measurements": [
+                  0.7,
+                  0.5,
+                  0.7,
+                  0.6
+                ],
+                "symbol": "Si"
+              },
+              {
+                "colorOverride": null,
+                "measurements": [
+                  0,
+                  0.1,
+                  0.1,
+                  0
+                ],
+                "expected": null,
+                "id": "el_mu2iy3cfd8ad3",
+                "symbol": "Mo"
+              },
+              {
+                "id": "el_mu2iy3cfb12i3",
+                "symbol": "Mn",
+                "measurements": [
+                  0.3,
+                  0.8,
+                  0.7,
+                  0.6
+                ],
+                "colorOverride": null,
+                "expected": null
+              },
+              {
+                "symbol": "Al",
+                "colorOverride": null,
+                "expected": null,
+                "id": "el_mu2iy3cfez9bz",
+                "measurements": []
+              },
+              {
+                "symbol": "Nb",
+                "expected": null,
+                "colorOverride": null,
+                "id": "el_mu2iy3cflhz34",
+                "measurements": []
+              },
+              {
+                "symbol": "Ti",
+                "id": "el_mu2iy3cfgce3o",
+                "measurements": [],
+                "expected": null,
+                "colorOverride": null
+              }
+            ]
+          },
+          {
+            "id": "smp_mu2k8efnwvkgw",
+            "elements": [
+              {
+                "colorOverride": null,
+                "measurements": [],
+                "symbol": "Fe",
+                "id": "el_mu2k8efned4w6",
+                "expected": null
+              },
+              {
+                "id": "el_mu2k8efn7c4j2",
+                "colorOverride": null,
+                "symbol": "Cr",
+                "expected": null,
+                "measurements": []
+              },
+              {
+                "id": "el_mu2k8efn56m6d",
+                "symbol": "Ni",
+                "colorOverride": null,
+                "expected": null,
+                "measurements": []
+              },
+              {
+                "expected": null,
+                "symbol": "Si",
+                "colorOverride": null,
+                "measurements": [],
+                "id": "el_mu2k8efnsqc5f"
+              },
+              {
+                "expected": null,
+                "id": "el_mu2k8efnnhfj5",
+                "symbol": "Mo",
+                "measurements": [],
+                "colorOverride": null
+              },
+              {
+                "expected": null,
+                "symbol": "Mn",
+                "colorOverride": null,
+                "measurements": [],
+                "id": "el_mu2k8efn90d8u"
+              },
+              {
+                "symbol": "Al",
+                "measurements": [],
+                "id": "el_mu2k8efnaw3hb",
+                "colorOverride": null,
+                "expected": null
+              },
+              {
+                "expected": null,
+                "colorOverride": null,
+                "id": "el_mu2k8efngdkfi",
+                "measurements": [],
+                "symbol": "Nb"
+              },
+              {
+                "measurements": [],
+                "colorOverride": null,
+                "id": "el_mu2k8efne5iyo",
+                "expected": null,
+                "symbol": "Ti"
+              }
+            ],
+            "name": "BS 87E (AISI 341)",
+            "colorOverride": null
+          },
+          {
+            "colorOverride": null,
+            "id": "smp_mu2k8fqkou3uf",
+            "name": "BS 85D (AISI 321)",
+            "elements": [
+              {
+                "colorOverride": null,
+                "measurements": [],
+                "expected": null,
+                "symbol": "Fe",
+                "id": "el_mu2k8fqky19eo"
+              },
+              {
+                "id": "el_mu2k8fqkok36b",
+                "expected": null,
+                "symbol": "Cr",
+                "measurements": [],
+                "colorOverride": null
+              },
+              {
+                "id": "el_mu2k8fqk42b4e",
+                "expected": null,
+                "symbol": "Ni",
+                "colorOverride": null,
+                "measurements": []
+              },
+              {
+                "id": "el_mu2k8fqkiuc9l",
+                "colorOverride": null,
+                "measurements": [],
+                "expected": null,
+                "symbol": "Si"
+              },
+              {
+                "id": "el_mu2k8fqk4lfmb",
+                "colorOverride": null,
+                "expected": null,
+                "measurements": [],
+                "symbol": "Mo"
+              },
+              {
+                "id": "el_mu2k8fqkua8uh",
+                "measurements": [],
+                "colorOverride": null,
+                "expected": null,
+                "symbol": "Mn"
+              },
+              {
+                "colorOverride": null,
+                "measurements": [],
+                "id": "el_mu2k8fqk44pwr",
+                "symbol": "Al",
+                "expected": null
+              },
+              {
+                "symbol": "Nb",
+                "id": "el_mu2k8fqk0i4vs",
+                "colorOverride": null,
+                "expected": null,
+                "measurements": []
+              },
+              {
+                "id": "el_mu2k8fqkysyxv",
+                "symbol": "Ti",
+                "colorOverride": null,
+                "expected": null,
+                "measurements": []
+              }
+            ]
+          }
+        ]
+      },
+      "aluminum": {
+        "colorOverride": null,
+        "defaultElements": [
+          "Al",
+          "Cu",
+          "Zn",
+          "Mg",
+          "Si"
+        ],
+        "samples": []
+      },
+      "nickel": {
+        "colorOverride": null,
+        "defaultElements": [
+          "Ni",
+          "Co",
+          "Cr",
+          "Fe"
+        ],
+        "samples": []
+      },
+      "titanium": {
+        "colorOverride": null,
+        "defaultElements": [
+          "Ti",
+          "Al",
+          "V"
+        ],
+        "samples": []
+      },
+      "copper": {
+        "colorOverride": null,
+        "defaultElements": [
+          "Cu",
+          "Zn",
+          "Sn",
+          "Pb",
+          "Ni",
+          "Fe",
+          "Al"
+        ],
+        "samples": []
+      }
+    },
+    "settings": {
+      "greenPct": 5,
+      "yellowPct": 20,
+      "grayBelowWt": 0.1
+    }
+  }
+}

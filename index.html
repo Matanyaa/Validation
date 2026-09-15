@@ -166,9 +166,11 @@
   .el-field{ display:flex; flex-direction:column; gap:3px; flex:none; }
   .el-field label{ font-size:9.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-mute); }
   .el-expected{
-    width:78px; background:var(--panel2); border:1px solid var(--border); color:var(--text);
-    border-radius:6px; padding:6px 8px; font-family:'IBM Plex Mono',monospace; font-size:13.5px;
+    width:92px; background:var(--panel2); border:1px solid var(--border); color:var(--text);
+    border-radius:6px; padding:6px 6px; font-family:'IBM Plex Mono',monospace; font-size:13.5px; text-align:center;
+    -moz-appearance:textfield; appearance:textfield;
   }
+  .el-expected::-webkit-outer-spin-button, .el-expected::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
   .measurements-block{ display:flex; flex-direction:column; gap:5px; flex:1 1 220px; min-width:180px; }
   .measurements-block > label{ font-size:9.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-mute); }
   .no-spots-hint{ font-size:12px; color:var(--text-mute); font-style:italic; }
@@ -193,9 +195,11 @@
   .spot-remove:hover{ color:var(--bad); }
   .spot-values{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
   .spot-value-input{
-    width:56px; background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:6px;
-    padding:6px 6px; font-family:'IBM Plex Mono',monospace; font-size:13px; text-align:center;
+    width:72px; background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:6px;
+    padding:6px 5px; font-family:'IBM Plex Mono',monospace; font-size:13px; text-align:center;
+    -moz-appearance:textfield; appearance:textfield;
   }
+  .spot-value-input::-webkit-outer-spin-button, .spot-value-input::-webkit-inner-spin-button{ -webkit-appearance:none; margin:0; }
   .spot-value-input.excluded{ opacity:0.4; border-style:dashed; }
 
   .el-computed{ display:flex; flex-direction:column; gap:3px; flex:none; width:64px; }
@@ -397,9 +401,10 @@
    up your own Firebase project before this can save anything.
    ========================================================= */
 
-const APP_VERSION = 'v1.3.0';
+const APP_VERSION = 'v1.3.1';
 const APP_VERSION_DATE = '2026-09-15';
 const VERSION_LOG = [
+  { version: 'v1.3.1', date: '2026-09-15', notes: 'Widened the expected-value and measurement-value fields and removed the number-spinner arrows so values with 3+ digits no longer get clipped behind the field edge.' },
   { version: 'v1.3.0', date: '2026-09-15', notes: 'Measurements are now shared per-spot across every element in a calibrant (one measurement session = one value per element), with a per-spot exclude-from-average toggle. Added standard deviation next to the average. Added a per-matrix Print / Save as PDF view. Existing data is migrated automatically.' },
   { version: 'v1.2.0', date: '2026-09-15', notes: 'Export can now write timestamped backups straight into a folder you choose (desktop Chrome/Edge only, via "Export to backup folder"); falls back to a normal download everywhere else, including phones.' },
   { version: 'v1.1.0', date: '2026-09-15', notes: 'Added export/import: download a JSON backup of everything from Settings, or restore from one on any device.' },
@@ -791,7 +796,7 @@ function renderSampleEditor() {
     <div class="elements-list" id="elementsList">
       <div class="elements-head">
         <span style="width:78px;">Element</span>
-        <span style="width:78px;">Expected wt%</span>
+        <span style="width:92px;">Expected wt%</span>
         <span style="flex:1;">Measurements wt%</span>
         <span style="width:64px;">Avg</span>
         <span style="width:64px;">StDev</span>
