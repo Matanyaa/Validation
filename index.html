@@ -349,9 +349,10 @@
    up your own Firebase project before this can save anything.
    ========================================================= */
 
-const APP_VERSION = 'v1.0.0';
-const APP_VERSION_DATE = '2026-09-14';
+const APP_VERSION = 'v1.1.0';
+const APP_VERSION_DATE = '2026-09-15';
 const VERSION_LOG = [
+  { version: 'v1.1.0', date: '2026-09-15', notes: 'Added export/import: download a JSON backup of everything from Settings, or restore from one on any device.' },
   { version: 'v1.0.0', date: '2026-09-14', notes: 'Initial release: six matrices, per-sample element tracking, auto color grading with manual overrides, editable thresholds and default element sets.' },
 ];
 
@@ -973,6 +974,16 @@ function renderSettingsBody() {
       <p class="hint">Applied to new calibrants only — existing ones keep their current element list.</p>
       ${MATRIX_ORDER.map(key => matrixDefaultsBlockHTML(key)).join('')}
     </div>
+    <div class="settings-section">
+      <h3>Backup</h3>
+      <p class="hint">Export everything to a file you can keep or move between devices. Importing replaces all current data.</p>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
+        <button type="button" class="btn-secondary" id="exportBtn">Export to file</button>
+        <button type="button" class="btn-secondary" id="importBtn">Import from file</button>
+        <input type="file" id="importFileInput" accept="application/json,.json" style="display:none;">
+      </div>
+      <p class="hint" id="importStatus" style="margin:10px 0 0;"></p>
+    </div>
   `;
   body.innerHTML = html;
   wireSettingsEvents();
@@ -1051,6 +1062,87 @@ function wireSettingsEvents() {
       }
     });
   });
+
+  document.getElementById('exportBtn').addEventListener('click', exportData);
+  const importBtn = document.getElementById('importBtn');
+  const importInput = document.getElementById('importFileInput');
+  importBtn.addEventListener('click', () => importInput.click());
+  importInput.addEventListener('change', () => {
+    const file = importInput.files && importInput.files[0];
+    if (file) importDataFromFile(file);
+    importInput.value = '';
+  });
+}
+
+/* ---------- export / import ---------- */
+
+function exportData() {
+  const payload = {
+    app: 'sem-validation',
+    exportedAt: new Date().toISOString(),
+    version: APP_VERSION,
+    state,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const stamp = new Date().toISOString().slice(0, 10);
+  a.href = url;
+  a.download = `sem-validation-backup-${stamp}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  const statusEl = document.getElementById('importStatus');
+  if (statusEl) statusEl.textContent = 'Exported.';
+}
+
+function mergeIncomingState(incoming) {
+  const fresh = defaultState();
+  if (incoming.matrices) {
+    MATRIX_ORDER.forEach(key => {
+      if (incoming.matrices[key]) {
+        fresh.matrices[key] = {
+          colorOverride: incoming.matrices[key].colorOverride || null,
+          defaultElements: Array.isArray(incoming.matrices[key].defaultElements) && incoming.matrices[key].defaultElements.length
+            ? incoming.matrices[key].defaultElements : fresh.matrices[key].defaultElements,
+          samples: Array.isArray(incoming.matrices[key].samples) ? incoming.matrices[key].samples : [],
+        };
+      }
+    });
+  }
+  if (incoming.settings) fresh.settings = { ...fresh.settings, ...incoming.settings };
+  return fresh;
+}
+
+function importDataFromFile(file) {
+  const statusEl = document.getElementById('importStatus');
+  const reader = new FileReader();
+  reader.onload = () => {
+    let parsed;
+    try {
+      parsed = JSON.parse(reader.result);
+    } catch (err) {
+      if (statusEl) statusEl.textContent = "Couldn't read that file — it doesn't look like valid JSON.";
+      return;
+    }
+    const incoming = parsed && typeof parsed === 'object' && parsed.state ? parsed.state : parsed;
+    if (!incoming || typeof incoming !== 'object' || !incoming.matrices) {
+      if (statusEl) statusEl.textContent = "That file doesn't look like a SEM Validation backup.";
+      return;
+    }
+    if (!confirm('Import this file? It will replace all current data (local and cloud).')) return;
+    state = mergeIncomingState(incoming);
+    activeSampleByMatrix = {};
+    scheduleSave();
+    renderAll();
+    renderSettingsBody();
+    if (statusEl) statusEl.textContent = 'Imported — saving…';
+  };
+  reader.onerror = () => {
+    if (statusEl) statusEl.textContent = 'Could not read that file.';
+  };
+  reader.readAsText(file);
 }
 
 function openSettings() {
