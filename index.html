@@ -171,16 +171,32 @@
   }
   .measurements-block{ display:flex; flex-direction:column; gap:5px; flex:1 1 220px; min-width:180px; }
   .measurements-block > label{ font-size:9.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-mute); }
-  .measurements-chips{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
-  .measure-chip{ display:flex; align-items:center; gap:4px; background:var(--panel2); border:1px solid var(--border); border-radius:6px; padding:2px 4px 2px 8px; }
-  .measure-chip input{
-    width:60px; background:none; border:none; color:var(--text); font-family:'IBM Plex Mono',monospace; font-size:13px; padding:4px 2px;
-  }
-  .measure-chip input:focus{ outline:none; }
-  .measure-chip .rm{ background:none; border:none; color:var(--text-mute); font-size:13px; padding:4px 6px; line-height:1; }
-  .measure-chip .rm:hover{ color:var(--bad); }
+  .no-spots-hint{ font-size:12px; color:var(--text-mute); font-style:italic; }
   .add-measure{ background:none; border:1px dashed var(--border); color:var(--text-mute); border-radius:6px; padding:5px 9px; font-size:12px; }
   .add-measure:hover{ color:var(--accent); border-color:var(--accent-dim); }
+
+  /* ---------- shared measurement spots ---------- */
+  .spots-bar{
+    display:flex; flex-wrap:wrap; align-items:center; gap:10px; padding:10px 14px; margin-bottom:12px;
+    background:var(--panel2); border:1px solid var(--border-soft); border-radius:8px;
+  }
+  .spots-bar .label{ font-size:11.5px; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-mute); }
+  .spots-bar-list{ display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
+  .spot-chip-wrap{ display:flex; align-items:center; background:var(--panel3); border:1px solid var(--border); border-radius:14px; padding:2px 2px 2px 4px; }
+  .spot-chip{
+    background:none; border:none; color:var(--text-dim); font-family:'IBM Plex Mono',monospace; font-size:12.5px;
+    padding:4px 6px; border-radius:12px;
+  }
+  .spot-chip:hover{ color:var(--text); }
+  .spot-chip.excluded{ color:var(--text-mute); text-decoration:line-through; }
+  .spot-remove{ background:none; border:none; color:var(--text-mute); font-size:13px; padding:4px 8px 4px 2px; line-height:1; }
+  .spot-remove:hover{ color:var(--bad); }
+  .spot-values{ display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+  .spot-value-input{
+    width:56px; background:var(--panel2); border:1px solid var(--border); color:var(--text); border-radius:6px;
+    padding:6px 6px; font-family:'IBM Plex Mono',monospace; font-size:13px; text-align:center;
+  }
+  .spot-value-input.excluded{ opacity:0.4; border-style:dashed; }
 
   .el-computed{ display:flex; flex-direction:column; gap:3px; flex:none; width:64px; }
   .el-computed .val{ font-family:'IBM Plex Mono',monospace; font-size:13.5px; color:var(--text); }
@@ -293,6 +309,36 @@
     .el-symbol-wrap{ width:66px; }
     .elements-head{ display:none; }
   }
+
+  /* ---------- print / PDF ---------- */
+  .print-only{ display:none; }
+  @media print{
+    body *{ visibility:hidden; }
+    #printView, #printView *{ visibility:visible; }
+    #printView{
+      display:block; position:absolute; top:0; left:0; width:100%; padding:0; margin:0;
+      background:#fff; color:#111;
+      font-family:'IBM Plex Sans', sans-serif; font-size:11pt;
+    }
+    #printView h1{ font-family:'Oswald',sans-serif; font-size:20pt; margin:0 0 4px; color:#111; }
+    #printView .print-header p{ color:#444; font-size:10pt; margin:0 0 18px; }
+    #printView h2{ font-family:'Oswald',sans-serif; font-size:14pt; margin:18px 0 8px; color:#111; display:flex; align-items:center; gap:10px; }
+    #printView .print-sample{ break-inside:avoid; page-break-inside:avoid; margin-bottom:22px; }
+    #printView .print-empty{ color:#444; }
+    .print-table{ width:100%; border-collapse:collapse; font-size:9.5pt; }
+    .print-table th, .print-table td{ border:1px solid #bbb; padding:4px 7px; text-align:left; font-variant-numeric:tabular-nums; }
+    .print-table th{ background:#f0f0f0; font-weight:600; }
+    .print-table td.print-excluded{ color:#999; text-decoration:line-through; }
+    .print-badge{
+      display:inline-block; border-radius:10px; padding:2px 9px; font-size:9pt; font-weight:600;
+      background:#eee; color:#333; border:1px solid #ccc;
+    }
+    .print-badge.green{ background:#e3f3e8; color:#1e6b3a; border-color:#a9d9b8; }
+    .print-badge.yellow{ background:#fbf0da; color:#8a6416; border-color:#e8cc8f; }
+    .print-badge.red{ background:#fbe4e2; color:#a3312a; border-color:#eeb3ae; }
+    .print-badge.gray{ background:#eee; color:#555; border-color:#ccc; }
+    td.print-badge{ display:table-cell; border:1px solid #bbb; font-weight:600; }
+  }
 </style>
 </head>
 <body>
@@ -336,6 +382,8 @@
 
 <datalist id="elementSymbolsList"></datalist>
 
+<div id="printView" class="print-only"></div>
+
 <footer>
   <span id="appVersion" class="mono"></span>
   <button id="checkUpdateBtn" class="link-btn">Check for update</button>
@@ -349,9 +397,10 @@
    up your own Firebase project before this can save anything.
    ========================================================= */
 
-const APP_VERSION = 'v1.2.0';
+const APP_VERSION = 'v1.3.0';
 const APP_VERSION_DATE = '2026-09-15';
 const VERSION_LOG = [
+  { version: 'v1.3.0', date: '2026-09-15', notes: 'Measurements are now shared per-spot across every element in a calibrant (one measurement session = one value per element), with a per-spot exclude-from-average toggle. Added standard deviation next to the average. Added a per-matrix Print / Save as PDF view. Existing data is migrated automatically.' },
   { version: 'v1.2.0', date: '2026-09-15', notes: 'Export can now write timestamped backups straight into a folder you choose (desktop Chrome/Edge only, via "Export to backup folder"); falls back to a normal download everywhere else, including phones.' },
   { version: 'v1.1.0', date: '2026-09-15', notes: 'Added export/import: download a JSON backup of everything from Settings, or restore from one on any device.' },
   { version: 'v1.0.0', date: '2026-09-14', notes: 'Initial release: six matrices, per-sample element tracking, auto color grading with manual overrides, editable thresholds and default element sets.' },
@@ -404,6 +453,52 @@ function defaultMatrixState(key) {
   return { colorOverride: null, defaultElements: [...DEFAULT_ELEMENTS[key]], samples: [] };
 }
 
+function newElement(symbol) {
+  return { id: uid('el_'), symbol, expected: null, colorOverride: null };
+}
+
+function newSample(name, defaultElements) {
+  return { id: uid('smp_'), name, colorOverride: null, elements: defaultElements.map(newElement), spots: [] };
+}
+
+// One-time, idempotent upgrade from the old per-element measurement lists
+// (each element had its own independent `measurements` array) to shared
+// per-spot measurements (one spot = one measurement session, with a value
+// per element). Values were always entered in matching order across
+// elements, so the Nth value of every element's old list becomes spot N.
+// Safe to call on already-migrated samples (a `spots` array present) or
+// freshly-created ones (nothing to do) — it's a no-op either way.
+function migrateSampleToSpots(sample) {
+  if (Array.isArray(sample.spots)) return false;
+  const maxLen = (sample.elements || []).reduce((max, el) =>
+    Math.max(max, Array.isArray(el.measurements) ? el.measurements.length : 0), 0);
+  const spots = [];
+  for (let i = 0; i < maxLen; i++) {
+    const values = {};
+    sample.elements.forEach(el => {
+      const v = Array.isArray(el.measurements) ? el.measurements[i] : undefined;
+      if (typeof v === 'number' && !Number.isNaN(v)) values[el.id] = v;
+    });
+    spots.push({ id: uid('spot_'), excluded: false, values });
+  }
+  sample.spots = spots;
+  sample.elements.forEach(el => { delete el.measurements; });
+  return true;
+}
+
+// Returns true if anything was actually migrated, so callers can decide
+// whether the upgraded structure needs writing back to storage.
+function migrateStateInPlace(s) {
+  let changed = false;
+  MATRIX_ORDER.forEach(key => {
+    const m = s.matrices[key];
+    if (m && Array.isArray(m.samples)) {
+      m.samples.forEach(sample => { if (migrateSampleToSpots(sample)) changed = true; });
+    }
+  });
+  return changed;
+}
+
 function defaultState() {
   const matrices = {};
   MATRIX_ORDER.forEach(k => { matrices[k] = defaultMatrixState(k); });
@@ -416,12 +511,20 @@ let activeSampleByMatrix = {};
 
 /* ---------- color logic ---------- */
 
-function elementColorResult(el, settings) {
+// Non-excluded spot values recorded for this element, as plain numbers.
+function elementValues(el, sample) {
+  return (sample.spots || [])
+    .filter(spot => !spot.excluded)
+    .map(spot => spot.values[el.id])
+    .filter(v => typeof v === 'number' && !Number.isNaN(v));
+}
+
+function elementColorResult(el, sample, settings) {
   if (el.colorOverride) return { color: el.colorOverride, manual: true };
   const expected = el.expected;
   if (expected === null || expected === undefined || expected === '') return { color: null, manual: false };
   if (Math.abs(expected) <= settings.grayBelowWt) return { color: 'gray', manual: false };
-  const nums = (el.measurements || []).filter(v => typeof v === 'number' && !Number.isNaN(v));
+  const nums = elementValues(el, sample);
   if (nums.length === 0) return { color: null, manual: false };
   const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
   const pctDev = Math.abs(avg - expected) / Math.abs(expected) * 100;
@@ -430,14 +533,23 @@ function elementColorResult(el, settings) {
   return { color: 'red', manual: false };
 }
 
-function elementAvg(el) {
-  const nums = (el.measurements || []).filter(v => typeof v === 'number' && !Number.isNaN(v));
+function elementAvg(el, sample) {
+  const nums = elementValues(el, sample);
   if (nums.length === 0) return null;
   return nums.reduce((a, b) => a + b, 0) / nums.length;
 }
 
-function elementPctDev(el) {
-  const avg = elementAvg(el);
+// Sample standard deviation (n-1). Needs at least 2 non-excluded values.
+function elementStdev(el, sample) {
+  const nums = elementValues(el, sample);
+  if (nums.length < 2) return null;
+  const avg = nums.reduce((a, b) => a + b, 0) / nums.length;
+  const variance = nums.reduce((a, b) => a + (b - avg) * (b - avg), 0) / (nums.length - 1);
+  return Math.sqrt(variance);
+}
+
+function elementPctDev(el, sample) {
+  const avg = elementAvg(el, sample);
   const expected = el.expected;
   if (avg === null || expected === null || expected === undefined || expected === '') return null;
   if (expected === 0) return avg === 0 ? 0 : Infinity;
@@ -457,7 +569,7 @@ function aggregateColorResult(results, override) {
 }
 
 function sampleColorResult(sample, settings) {
-  const results = (sample.elements || []).map(el => elementColorResult(el, settings));
+  const results = (sample.elements || []).map(el => elementColorResult(el, sample, settings));
   return aggregateColorResult(results, sample.colorOverride);
 }
 
@@ -571,7 +683,10 @@ function renderMatrixSummary() {
       <span class="label">Matrix status</span>
       <span id="matrixColorBadge">${badgeHTML(result, 'large')}</span>
     </div>
-    <button type="button" class="add-sample-btn" id="addSampleBtn">+ Add calibrant</button>
+    <div style="display:flex; gap:10px;">
+      <button type="button" class="btn-secondary" id="printMatrixBtn">Print / Save as PDF</button>
+      <button type="button" class="add-sample-btn" id="addSampleBtn">+ Add calibrant</button>
+    </div>
   `;
   const badge = bar.querySelector('#matrixColorBadge .badge');
   badge.style.cursor = 'pointer';
@@ -583,19 +698,14 @@ function renderMatrixSummary() {
     });
   });
   bar.querySelector('#addSampleBtn').addEventListener('click', addSample);
+  bar.querySelector('#printMatrixBtn').addEventListener('click', () => printMatrix(activeMatrix));
 }
 
 function addSample() {
   const matrix = state.matrices[activeMatrix];
-  const id = uid('smp_');
-  const sample = {
-    id,
-    name: `Calibrant ${matrix.samples.length + 1}`,
-    colorOverride: null,
-    elements: matrix.defaultElements.map(sym => ({ id: uid('el_'), symbol: sym, expected: null, measurements: [], colorOverride: null })),
-  };
+  const sample = newSample(`Calibrant ${matrix.samples.length + 1}`, matrix.defaultElements);
   matrix.samples.push(sample);
-  activeSampleByMatrix[activeMatrix] = id;
+  activeSampleByMatrix[activeMatrix] = sample.id;
   scheduleSave();
   renderAll();
 }
@@ -675,6 +785,8 @@ function renderSampleEditor() {
       }).join('') + `</div>`;
   }
 
+  html += spotsBarHTML(sample);
+
   html += `
     <div class="elements-list" id="elementsList">
       <div class="elements-head">
@@ -682,12 +794,13 @@ function renderSampleEditor() {
         <span style="width:78px;">Expected wt%</span>
         <span style="flex:1;">Measurements wt%</span>
         <span style="width:64px;">Avg</span>
+        <span style="width:64px;">StDev</span>
         <span style="width:64px;">&Delta;%</span>
         <span style="width:130px;">Status</span>
         <span style="width:24px;"></span>
       </div>
   `;
-  sample.elements.forEach(el => { html += elementRowHTML(el); });
+  sample.elements.forEach(el => { html += elementRowHTML(el, sample); });
   html += `</div>`;
 
   html += `
@@ -705,20 +818,43 @@ function renderSampleEditor() {
 
   wireSampleHeaderEvents(sample);
   if (activeMatrix === 'nickel') wireSuggestedEvents(sample);
+  wireSpotsBarEvents(sample);
   wireElementRowEvents(sample);
   wireAddElementEvents(sample);
 }
 
-function elementRowHTML(el) {
-  const result = elementColorResult(el, state.settings);
-  const avg = elementAvg(el);
-  const pct = elementPctDev(el);
-  const measureChips = (el.measurements || []).map((v, i) => `
-    <span class="measure-chip">
-      <input type="number" step="any" inputmode="decimal" value="${v === null || v === undefined ? '' : v}" data-meas-index="${i}">
-      <button type="button" class="rm" data-rm-meas="${i}">&times;</button>
+// The shared measurement-session bar: one chip per spot (a single
+// measurement session that carries a value for every element at once),
+// each independently excludable/removable, plus the one "add" action that
+// appends a new spot — which then shows up as a new blank input on every
+// element row below.
+function spotsBarHTML(sample) {
+  const chips = (sample.spots || []).map((spot, i) => `
+    <span class="spot-chip-wrap">
+      <button type="button" class="spot-chip ${spot.excluded ? 'excluded' : ''}" data-spot-toggle="${spot.id}" title="${spot.excluded ? 'Click to include in the average' : 'Click to exclude from the average'}">#${i + 1}${spot.excluded ? ' excl.' : ''}</button>
+      <button type="button" class="spot-remove" data-spot-remove="${spot.id}" title="Remove this measurement from every element">&times;</button>
     </span>
   `).join('');
+  return `
+    <div class="spots-bar">
+      <span class="label">Measurements</span>
+      <div class="spots-bar-list">
+        ${chips}
+        <button type="button" class="add-measure" id="addSpotBtn">+ Add measurement</button>
+      </div>
+    </div>
+  `;
+}
+
+function elementRowHTML(el, sample) {
+  const result = elementColorResult(el, sample, state.settings);
+  const avg = elementAvg(el, sample);
+  const sd = elementStdev(el, sample);
+  const pct = elementPctDev(el, sample);
+  const spotInputs = (sample.spots || []).map(spot => {
+    const v = spot.values[el.id];
+    return `<input type="number" step="any" inputmode="decimal" class="spot-value-input ${spot.excluded ? 'excluded' : ''}" data-spot-id="${spot.id}" value="${v === undefined || v === null ? '' : v}">`;
+  }).join('');
 
   return `
     <div class="element-row" data-el-id="${el.id}">
@@ -731,14 +867,17 @@ function elementRowHTML(el) {
       </div>
       <div class="measurements-block">
         <label>Measurements</label>
-        <div class="measurements-chips" data-role="chips">
-          ${measureChips}
-          <button type="button" class="add-measure" data-role="add-measure">+ value</button>
+        <div class="spot-values" data-role="spot-values">
+          ${spotInputs || '<span class="no-spots-hint">Add a measurement above</span>'}
         </div>
       </div>
       <div class="el-computed">
         <label>Avg</label>
         <span class="val mono" data-role="avg">${fmtNum(avg)}</span>
+      </div>
+      <div class="el-computed">
+        <label>StDev</label>
+        <span class="val mono" data-role="stdev">${sd === null ? '—' : fmtNum(sd)}</span>
       </div>
       <div class="el-computed">
         <label>&Delta;%</label>
@@ -783,7 +922,7 @@ function wireSuggestedEvents(sample) {
     btn.addEventListener('click', () => {
       const sym = btn.dataset.suggest;
       if (sample.elements.some(e => e.symbol.toLowerCase() === sym.toLowerCase())) return;
-      sample.elements.push({ id: uid('el_'), symbol: sym, expected: null, measurements: [], colorOverride: null });
+      sample.elements.push(newElement(sym));
       scheduleSave();
       renderAll();
     });
@@ -800,7 +939,7 @@ function wireAddElementEvents(sample) {
       input.style.borderColor = 'var(--bad)';
       return;
     }
-    sample.elements.push({ id: uid('el_'), symbol: sym, expected: null, measurements: [], colorOverride: null });
+    sample.elements.push(newElement(sym));
     scheduleSave();
     renderAll();
     setTimeout(() => {
@@ -812,6 +951,41 @@ function wireAddElementEvents(sample) {
   }
   btn.addEventListener('click', commitAdd);
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); commitAdd(); } });
+}
+
+// The spots bar: adding, removing, and excluding a measurement session —
+// each action touches every element's row, so all three just re-render.
+function wireSpotsBarEvents(sample) {
+  document.querySelectorAll('[data-spot-toggle]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const spot = sample.spots.find(s => s.id === btn.dataset.spotToggle);
+      if (!spot) return;
+      spot.excluded = !spot.excluded;
+      scheduleSave();
+      renderAll();
+    });
+  });
+  document.querySelectorAll('[data-spot-remove]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (!confirm('Remove this measurement? This deletes its value for every element.')) return;
+      sample.spots = sample.spots.filter(s => s.id !== btn.dataset.spotRemove);
+      scheduleSave();
+      renderAll();
+    });
+  });
+  const addBtn = document.getElementById('addSpotBtn');
+  addBtn.addEventListener('click', () => {
+    sample.spots.push({ id: uid('spot_'), excluded: false, values: {} });
+    scheduleSave();
+    renderAll();
+    setTimeout(() => {
+      const firstRow = document.querySelector('#elementsList .element-row');
+      if (!firstRow) return;
+      const inputs = firstRow.querySelectorAll('.spot-value-input');
+      const last = inputs[inputs.length - 1];
+      if (last) last.focus();
+    }, 0);
+  });
 }
 
 function wireElementRowEvents(sample) {
@@ -838,52 +1012,16 @@ function wireElementRowEvents(sample) {
       scheduleSave();
     });
 
-    row.querySelectorAll('[data-meas-index]').forEach(input => {
+    row.querySelectorAll('.spot-value-input').forEach(input => {
       input.addEventListener('input', () => {
-        const idx = parseInt(input.dataset.measIndex, 10);
+        const spot = sample.spots.find(s => s.id === input.dataset.spotId);
+        if (!spot) return;
         const v = input.value;
-        el.measurements[idx] = v === '' ? null : parseFloat(v);
+        if (v === '') delete spot.values[el.id];
+        else spot.values[el.id] = parseFloat(v);
         recomputeRow(sample, el);
         scheduleSave();
       });
-      input.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          el.measurements.push(null);
-          scheduleSave();
-          renderAll();
-          setTimeout(() => {
-            const r = document.querySelector(`.element-row[data-el-id="${el.id}"]`);
-            if (!r) return;
-            const chips = r.querySelectorAll('[data-meas-index]');
-            const lastChip = chips[chips.length - 1];
-            if (lastChip) lastChip.focus();
-          }, 0);
-        }
-      });
-    });
-
-    row.querySelectorAll('[data-rm-meas]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const idx = parseInt(btn.dataset.rmMeas, 10);
-        el.measurements.splice(idx, 1);
-        scheduleSave();
-        renderAll();
-      });
-    });
-
-    const addMeasureBtn = row.querySelector('[data-role="add-measure"]');
-    addMeasureBtn.addEventListener('click', () => {
-      el.measurements.push(null);
-      scheduleSave();
-      renderAll();
-      setTimeout(() => {
-        const r = document.querySelector(`.element-row[data-el-id="${el.id}"]`);
-        if (!r) return;
-        const chips = r.querySelectorAll('[data-meas-index]');
-        const lastChip = chips[chips.length - 1];
-        if (lastChip) lastChip.focus();
-      }, 0);
     });
 
     const badge = row.querySelector('[data-role="badge-wrap"] .badge');
@@ -904,14 +1042,17 @@ function wireElementRowEvents(sample) {
   });
 }
 
-// Surgical update: recompute one row's avg/%/badge plus the sample & matrix
-// badges, without rebuilding the whole editor (keeps focus while typing).
+// Surgical update: recompute one row's avg/stdev/%/badge plus the sample &
+// matrix badges, without rebuilding the whole editor (keeps focus while
+// typing a value).
 function recomputeRow(sample, el) {
   const row = document.querySelector(`.element-row[data-el-id="${el.id}"]`);
   if (row) {
-    const result = elementColorResult(el, state.settings);
-    row.querySelector('[data-role="avg"]').textContent = fmtNum(elementAvg(el));
-    const pct = elementPctDev(el);
+    const result = elementColorResult(el, sample, state.settings);
+    row.querySelector('[data-role="avg"]').textContent = fmtNum(elementAvg(el, sample));
+    const sd = elementStdev(el, sample);
+    row.querySelector('[data-role="stdev"]').textContent = sd === null ? '—' : fmtNum(sd);
+    const pct = elementPctDev(el, sample);
     row.querySelector('[data-role="pct"]').textContent = pct === null ? '—' : fmtNum(pct, 1) + '%';
     applyBadge(row.querySelector('[data-role="badge-wrap"] .badge'), result);
   }
@@ -1210,6 +1351,7 @@ function mergeIncomingState(incoming) {
     });
   }
   if (incoming.settings) fresh.settings = { ...fresh.settings, ...incoming.settings };
+  migrateStateInPlace(fresh);
   return fresh;
 }
 
@@ -1261,6 +1403,76 @@ function renderAll() {
   renderSampleEditor();
 }
 
+/* ---------- print / PDF ----------
+   Builds a self-contained print-only view of every calibrant in a matrix
+   into a hidden container, then hands off to the browser's own print
+   dialog (Save as PDF). No PDF library needed — @media print CSS hides
+   everything else and shows only #printView. */
+
+function printMatrix(matrixKey) {
+  const matrix = state.matrices[matrixKey];
+  const container = document.getElementById('printView');
+  const today = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  const matrixResult = matrixColorResult(matrix, state.settings);
+
+  let html = `
+    <div class="print-header">
+      <h1>SEM Validation &mdash; ${MATRIX_LABELS[matrixKey]}</h1>
+      <p>Generated ${today} &middot; Matrix overall: <span class="print-badge ${matrixResult.color || ''}">${COLOR_TEXT[matrixResult.color]}</span></p>
+    </div>
+  `;
+
+  if (matrix.samples.length === 0) {
+    html += `<p class="print-empty">No calibrants recorded for this matrix.</p>`;
+  }
+
+  matrix.samples.forEach(sample => {
+    const sResult = sampleColorResult(sample, state.settings);
+    const spots = sample.spots || [];
+    html += `
+      <div class="print-sample">
+        <h2>${escapeHTML(sample.name)} <span class="print-badge ${sResult.color || ''}">${COLOR_TEXT[sResult.color]}</span></h2>
+        <table class="print-table">
+          <thead>
+            <tr>
+              <th>Element</th>
+              <th>Expected</th>
+              ${spots.map((s, i) => `<th>#${i + 1}${s.excluded ? ' (excl.)' : ''}</th>`).join('')}
+              <th>Avg</th>
+              <th>StDev</th>
+              <th>&Delta;%</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${sample.elements.map(el => {
+              const result = elementColorResult(el, sample, state.settings);
+              const avg = elementAvg(el, sample);
+              const sd = elementStdev(el, sample);
+              const pct = elementPctDev(el, sample);
+              return `<tr>
+                <td>${escapeHTML(el.symbol)}</td>
+                <td>${el.expected === null || el.expected === undefined ? '—' : el.expected}</td>
+                ${spots.map(s => {
+                  const v = s.values[el.id];
+                  return `<td class="${s.excluded ? 'print-excluded' : ''}">${v === undefined || v === null ? '' : v}</td>`;
+                }).join('')}
+                <td>${fmtNum(avg)}</td>
+                <td>${sd === null ? '—' : fmtNum(sd)}</td>
+                <td>${pct === null ? '—' : fmtNum(pct, 1) + '%'}</td>
+                <td class="print-badge ${result.color || ''}">${COLOR_TEXT[result.color]}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+  window.print();
+}
+
 /* ---------- Firebase persistence ----------
    Fill in your real project values — see SETUP.md. Until you do, the app
    works fine locally but nothing is saved between visits/devices. */
@@ -1307,6 +1519,7 @@ async function saveToFirestore() {
 
 async function loadFromFirestore() {
   if (!validationDocRef) { isLoading = false; return; }
+  let needsResave = false;
   try {
     const doc = await validationDocRef.get();
     if (doc.exists && doc.data() && doc.data().data) {
@@ -1325,6 +1538,9 @@ async function loadFromFirestore() {
         });
       }
       if (payload.settings) fresh.settings = { ...fresh.settings, ...payload.settings };
+      // Upgrades old per-element measurement lists to shared per-spot ones
+      // the first time this doc is loaded post-upgrade; a no-op after that.
+      needsResave = migrateStateInPlace(fresh);
       state = fresh;
       setSyncStatus('Loaded from cloud');
     } else {
@@ -1335,6 +1551,7 @@ async function loadFromFirestore() {
     setSyncStatus('Offline — showing local data');
   }
   isLoading = false;
+  if (needsResave) scheduleSave();
 }
 
 function initFirebase() {
