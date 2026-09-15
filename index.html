@@ -349,9 +349,10 @@
    up your own Firebase project before this can save anything.
    ========================================================= */
 
-const APP_VERSION = 'v1.1.0';
+const APP_VERSION = 'v1.2.0';
 const APP_VERSION_DATE = '2026-09-15';
 const VERSION_LOG = [
+  { version: 'v1.2.0', date: '2026-09-15', notes: 'Export can now write timestamped backups straight into a folder you choose (desktop Chrome/Edge only, via "Export to backup folder"); falls back to a normal download everywhere else, including phones.' },
   { version: 'v1.1.0', date: '2026-09-15', notes: 'Added export/import: download a JSON backup of everything from Settings, or restore from one on any device.' },
   { version: 'v1.0.0', date: '2026-09-14', notes: 'Initial release: six matrices, per-sample element tracking, auto color grading with manual overrides, editable thresholds and default element sets.' },
 ];
@@ -976,12 +977,15 @@ function renderSettingsBody() {
     </div>
     <div class="settings-section">
       <h3>Backup</h3>
-      <p class="hint">Export everything to a file you can keep or move between devices. Importing replaces all current data.</p>
+      <p class="hint">${window.showDirectoryPicker
+        ? 'Export writes a timestamped file straight into a backup folder you choose — no repeated dialogs. On a phone or Safari this isn\'t supported, so export falls back to a normal download instead. Importing replaces all current data.'
+        : 'This browser can\'t write directly to a folder, so export downloads a timestamped file instead — move it into your backup folder yourself if you want it kept there. Importing replaces all current data.'}</p>
       <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:center;">
-        <button type="button" class="btn-secondary" id="exportBtn">Export to file</button>
+        <button type="button" class="btn-secondary" id="exportBtn">${window.showDirectoryPicker ? 'Export to backup folder' : 'Export to file'}</button>
         <button type="button" class="btn-secondary" id="importBtn">Import from file</button>
         <input type="file" id="importFileInput" accept="application/json,.json" style="display:none;">
       </div>
+      ${window.showDirectoryPicker ? '<button type="button" class="link-btn" id="changeBackupFolderBtn" style="margin-top:8px;">Change backup folder</button>' : ''}
       <p class="hint" id="importStatus" style="margin:10px 0 0;"></p>
     </div>
   `;
@@ -1063,7 +1067,9 @@ function wireSettingsEvents() {
     });
   });
 
-  document.getElementById('exportBtn').addEventListener('click', exportData);
+  document.getElementById('exportBtn').addEventListener('click', () => exportData(false));
+  const changeFolderBtn = document.getElementById('changeBackupFolderBtn');
+  if (changeFolderBtn) changeFolderBtn.addEventListener('click', () => exportData(true));
   const importBtn = document.getElementById('importBtn');
   const importInput = document.getElementById('importFileInput');
   importBtn.addEventListener('click', () => importInput.click());
@@ -1076,25 +1082,117 @@ function wireSettingsEvents() {
 
 /* ---------- export / import ---------- */
 
-function exportData() {
-  const payload = {
+// Filenames sort chronologically since every field is fixed-width and
+// zero-padded: sem-validation-2026-09-15_1645.json
+function backupFilename() {
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, '0');
+  return `sem-validation-${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.json`;
+}
+
+function backupPayload() {
+  return JSON.stringify({
     app: 'sem-validation',
     exportedAt: new Date().toISOString(),
     version: APP_VERSION,
     state,
-  };
-  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  }, null, 2);
+}
+
+// Remembers a chosen backup folder (File System Access API) across visits,
+// so repeat exports write straight into it with no dialog. Desktop
+// Chrome/Edge only — the API doesn't exist on iOS/Android/Safari, where
+// ensureBackupDirHandle() below resolves null and export() falls back to a
+// plain download instead.
+const HANDLE_DB_NAME = 'sem-validation-fs';
+const HANDLE_STORE = 'handles';
+
+function openHandleDB() {
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(HANDLE_DB_NAME, 1);
+    req.onupgradeneeded = () => req.result.createObjectStore(HANDLE_STORE);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function getSavedDirHandle() {
+  try {
+    const db = await openHandleDB();
+    return await new Promise((resolve) => {
+      const tx = db.transaction(HANDLE_STORE, 'readonly');
+      const req = tx.objectStore(HANDLE_STORE).get('backupDir');
+      req.onsuccess = () => resolve(req.result || null);
+      req.onerror = () => resolve(null);
+    });
+  } catch (err) {
+    return null;
+  }
+}
+
+async function setSavedDirHandle(handle) {
+  try {
+    const db = await openHandleDB();
+    const tx = db.transaction(HANDLE_STORE, 'readwrite');
+    if (handle) tx.objectStore(HANDLE_STORE).put(handle, 'backupDir');
+    else tx.objectStore(HANDLE_STORE).delete('backupDir');
+  } catch (err) { /* no-op: folder export just falls back to download */ }
+}
+
+// Resolves the folder to write into, prompting only when there's no
+// remembered handle or its permission needs re-confirming. `forcePick`
+// always opens the picker (used by "Change backup folder").
+async function ensureBackupDirHandle(forcePick) {
+  if (!window.showDirectoryPicker) return null;
+  if (!forcePick) {
+    const handle = await getSavedDirHandle();
+    if (handle) {
+      try {
+        let perm = await handle.queryPermission({ mode: 'readwrite' });
+        if (perm !== 'granted') perm = await handle.requestPermission({ mode: 'readwrite' });
+        if (perm === 'granted') return handle;
+      } catch (err) { /* fall through to re-pick */ }
+    }
+  }
+  try {
+    const handle = await window.showDirectoryPicker({ mode: 'readwrite' });
+    await setSavedDirHandle(handle);
+    return handle;
+  } catch (err) {
+    return null; // user cancelled the picker
+  }
+}
+
+async function exportData(forcePick) {
+  const statusEl = document.getElementById('importStatus');
+  const filename = backupFilename();
+  const json = backupPayload();
+
+  const dirHandle = await ensureBackupDirHandle(forcePick);
+  if (dirHandle) {
+    try {
+      const fileHandle = await dirHandle.getFileHandle(filename, { create: true });
+      const writable = await fileHandle.createWritable();
+      await writable.write(json);
+      await writable.close();
+      if (statusEl) statusEl.textContent = `Saved ${filename} to your backup folder.`;
+      return;
+    } catch (err) {
+      console.error('Folder export failed, falling back to download:', err);
+    }
+  }
+
+  // Fallback: a normal browser download (phones, Safari, or picker declined).
+  const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
-  const stamp = new Date().toISOString().slice(0, 10);
   a.href = url;
-  a.download = `sem-validation-backup-${stamp}.json`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
-  const statusEl = document.getElementById('importStatus');
-  if (statusEl) statusEl.textContent = 'Exported.';
+  if (statusEl) statusEl.textContent = `Downloaded ${filename}.`;
 }
 
 function mergeIncomingState(incoming) {
